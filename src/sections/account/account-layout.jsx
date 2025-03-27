@@ -1,22 +1,22 @@
-import { removeLastSlash } from 'minimal-shared/utils';
 import { useEffect } from 'react';
+import { removeLastSlash } from 'minimal-shared/utils';
 
 import Tab from '@mui/material/Tab';
+import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
-import Box from '@mui/material/Box';
 
 import { paths } from 'src/routes/paths';
 import { usePathname } from 'src/routes/hooks';
 import { RouterLink } from 'src/routes/components';
 
+import { useAuth } from 'src/hooks/use-auth';
+
 import { DashboardContent } from 'src/layouts/dashboard';
 
 import { Iconify } from 'src/components/iconify';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
-
-import { useAuth } from 'src/hooks/use-auth';
 
 // ----------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ const NAV_ITEMS = [
 
 export function AccountLayout({ children, ...other }) {
   const pathname = usePathname();
-  const { loading, user, userProfile, userId } = useAuth();
+  const { loading, user } = useAuth();
 
   // console.log('AccountLayout - Chargement:', loading);
   // console.log('AccountLayout - Utilisateur:', user);

@@ -3,6 +3,7 @@ import { paths } from 'src/routes/paths';
 import { DashboardContent } from 'src/layouts/dashboard';
 
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
+
 import { RoleBasedGuard } from 'src/auth/guard';
 
 import { UserNewEditForm } from '../user-new-edit-form';
@@ -27,8 +28,8 @@ export function UserCreateView() {
         roles={['super_admin', 'admin']}
         deniedContent={
           <div>
-            You don't have permission to create users. Only admins or super admins can create new
-            users.
+            You don&apos;t have permission to create users. Only admins or super admins can create
+            new users.
           </div>
         }
       >

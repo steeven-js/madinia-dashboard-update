@@ -3,19 +3,14 @@ import { paths } from 'src/routes/paths';
 import { DashboardContent } from 'src/layouts/dashboard';
 
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
+
 import { RoleBasedGuard } from 'src/auth/guard';
 
 import { UserNewEditForm } from '../user-new-edit-form';
-import { useAuth } from 'src/hooks/use-auth';
 
 // ----------------------------------------------------------------------
 
 export function UserEditView({ user: currentUser }) {
-  const { role: currentUserRole } = useAuth();
-
-  // Vérifier si c'est un super_admin ou un admin
-  const isAdmin = currentUserRole === 'super_admin' || currentUserRole === 'admin';
-
   return (
     <DashboardContent>
       <CustomBreadcrumbs
@@ -34,7 +29,7 @@ export function UserEditView({ user: currentUser }) {
         roles={['super_admin', 'admin']}
         deniedContent={
           <div>
-            You don't have permission to edit users. Only admins or super admins can edit user
+            You don&apos;t have permission to edit users. Only admins or super admins can edit user
             information.
           </div>
         }

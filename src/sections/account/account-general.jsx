@@ -1,28 +1,27 @@
 import { z as zod } from 'zod';
 import { useForm } from 'react-hook-form';
+import { useMemo, useEffect } from 'react';
+import { useBoolean } from 'minimal-shared/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { isValidPhoneNumber } from 'react-phone-number-input/input';
-import { useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Grid from '@mui/material/Grid2';
 import Stack from '@mui/material/Stack';
+import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
-import Alert from '@mui/material/Alert';
-
-import { fData } from 'src/utils/format-number';
-import { paths } from 'src/routes/paths';
-
-import { toast } from 'src/components/snackbar';
-import { Form, Field, schemaHelper } from 'src/components/hook-form';
-import { ConfirmDialog } from 'src/components/custom-dialog';
 
 import { useAuth } from 'src/hooks/use-auth';
-import { updateOrCreateUserData, deleteUserCompletely } from 'src/hooks/use-users';
-import { useBoolean } from 'minimal-shared/hooks';
+import { deleteUserCompletely, updateOrCreateUserData } from 'src/hooks/use-users';
+
+import { fData } from 'src/utils/format-number';
+
+import { toast } from 'src/components/snackbar';
+import { ConfirmDialog } from 'src/components/custom-dialog';
+import { Form, Field, schemaHelper } from 'src/components/hook-form';
 
 // ----------------------------------------------------------------------
 
@@ -52,7 +51,7 @@ export const UpdateUserSchema = zod.object({
 // ----------------------------------------------------------------------
 
 export function AccountGeneral() {
-  const { user, userProfile, userId, role, loading } = useAuth();
+  const { user, userProfile, userId, loading } = useAuth();
   const confirmDelete = useBoolean();
   const deleteLoading = useBoolean();
 
@@ -62,38 +61,44 @@ export function AccountGeneral() {
   // console.log('AccountGeneral - Profil Utilisateur:', userProfile);
   // console.log('AccountGeneral - Rôle Utilisateur:', role);
 
-  const isSuperAdmin = role === 'super_admin';
+  // Mémoriser l'objet currentUser pour éviter de le recréer à chaque rendu
+  const currentUser = useMemo(
+    () => ({
+      id: userId,
+      displayName: userProfile?.displayName || user?.displayName || '',
+      firstName: userProfile?.firstName || '',
+      lastName: userProfile?.lastName || '',
+      email: userProfile?.email || user?.email || '',
+      photoURL: userProfile?.avatarUrl || user?.photoURL || null,
+      phoneNumber: userProfile?.phoneNumber || user?.phoneNumber || '',
+      country: userProfile?.country || '',
+      address: userProfile?.address || '',
+      state: userProfile?.state || '',
+      city: userProfile?.city || '',
+      zipCode: userProfile?.zipCode || '',
+      about: userProfile?.about || '',
+      isPublic: userProfile?.isPublic || false,
+    }),
+    [userId, userProfile, user]
+  );
 
-  const currentUser = {
-    id: userId,
-    displayName: userProfile?.displayName || user?.displayName || '',
-    firstName: userProfile?.firstName || '',
-    lastName: userProfile?.lastName || '',
-    email: userProfile?.email || user?.email || '',
-    photoURL: userProfile?.avatarUrl || user?.photoURL || null,
-    phoneNumber: userProfile?.phoneNumber || user?.phoneNumber || '',
-    country: userProfile?.country || '',
-    address: userProfile?.address || '',
-    state: userProfile?.state || '',
-    city: userProfile?.city || '',
-    zipCode: userProfile?.zipCode || '',
-    about: userProfile?.about || '',
-    isPublic: userProfile?.isPublic || false,
-  };
-
-  const defaultValues = {
-    displayName: '',
-    email: '',
-    photoURL: null,
-    phoneNumber: '',
-    country: '',
-    address: '',
-    state: '',
-    city: '',
-    zipCode: '',
-    about: '',
-    isPublic: false,
-  };
+  // Mémoriser les valeurs par défaut pour éviter de les recréer à chaque rendu
+  const defaultValues = useMemo(
+    () => ({
+      displayName: '',
+      email: '',
+      photoURL: null,
+      phoneNumber: '',
+      country: '',
+      address: '',
+      state: '',
+      city: '',
+      zipCode: '',
+      about: '',
+      isPublic: false,
+    }),
+    []
+  );
 
   const methods = useForm({
     mode: 'all',
@@ -120,7 +125,7 @@ export function AccountGeneral() {
       });
       // console.log('Formulaire mis à jour avec les données utilisateur', currentUser);
     }
-  }, [loading, currentUser, setValue]);
+  }, [loading, currentUser, setValue, defaultValues]);
 
   const onSubmit = handleSubmit(async (data) => {
     try {

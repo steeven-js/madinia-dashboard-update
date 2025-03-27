@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
+import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { updateProfile, updatePassword, onAuthStateChanged } from 'firebase/auth';
 
 import { CONFIG } from 'src/global-config';
@@ -28,48 +28,6 @@ export function useAuth() {
   const unsubscribeRef = useRef(null);
 
   /**
-   * Convertit les timestamps Firestore en millisecondes
-   * @param {Date|FirebaseTimestamp|number|null} timestamp - Timestamp à convertir
-   * @returns {number|null} Timestamp en millisecondes ou null
-   */
-  const serializeTimestamp = (timestamp) => {
-    if (!timestamp) return null;
-    // Conversion depuis Timestamp Firestore
-    if (timestamp?.toMillis) {
-      return timestamp.toMillis();
-    }
-    // Conversion depuis Date
-    if (timestamp instanceof Date) {
-      return timestamp.getTime();
-    }
-    // Déjà en millisecondes
-    if (typeof timestamp === 'number') {
-      return timestamp;
-    }
-    return null;
-  };
-
-  /**
-   * Sérialise l'ensemble du profil utilisateur en convertissant les timestamps
-   * @param {Object|null} profile - Profil utilisateur brut
-   * @returns {Object|null} Profil sérialisé
-   */
-  const serializeProfile = (profile) => {
-    if (!profile) return null;
-
-    const serialized = { ...profile };
-
-    // Conversion des champs temporels
-    ['createdAt', 'updatedAt', 'lastConnection'].forEach((field) => {
-      if (profile[field]) {
-        serialized[field] = serializeTimestamp(profile[field]);
-      }
-    });
-
-    return serialized;
-  };
-
-  /**
    * Configure une écoute en temps réel sur le profil utilisateur dans Firestore
    * @param {string} uid - ID de l'utilisateur
    */
@@ -84,6 +42,48 @@ export function useAuth() {
 
     // console.log('Configuration de l\'écoute en temps réel pour l\'utilisateur:', uid);
     const userProfileRef = doc(FIRESTORE, 'users', uid);
+
+    /**
+     * Convertit les timestamps Firestore en millisecondes
+     * @param {Date|FirebaseTimestamp|number|null} timestamp - Timestamp à convertir
+     * @returns {number|null} Timestamp en millisecondes ou null
+     */
+    const serializeTimestamp = (timestamp) => {
+      if (!timestamp) return null;
+      // Conversion depuis Timestamp Firestore
+      if (timestamp?.toMillis) {
+        return timestamp.toMillis();
+      }
+      // Conversion depuis Date
+      if (timestamp instanceof Date) {
+        return timestamp.getTime();
+      }
+      // Déjà en millisecondes
+      if (typeof timestamp === 'number') {
+        return timestamp;
+      }
+      return null;
+    };
+
+    /**
+     * Sérialise l'ensemble du profil utilisateur en convertissant les timestamps
+     * @param {Object|null} profile - Profil utilisateur brut
+     * @returns {Object|null} Profil sérialisé
+     */
+    const serializeProfile = (profile) => {
+      if (!profile) return null;
+
+      const serialized = { ...profile };
+
+      // Conversion des champs temporels
+      ['createdAt', 'updatedAt', 'lastConnection'].forEach((field) => {
+        if (profile[field]) {
+          serialized[field] = serializeTimestamp(profile[field]);
+        }
+      });
+
+      return serialized;
+    };
 
     unsubscribeRef.current = onSnapshot(
       userProfileRef,
@@ -141,8 +141,8 @@ export function useAuth() {
         setIsAuthenticated(true);
 
         try {
-          // Récupération des custom claims
-          const idTokenResult = await _user.getIdTokenResult();
+          // Récupération des custom claims (non utilisée directement, mais peut être utile pour le débogage)
+          await _user.getIdToken(true);
 
           // Configurer l'écoute en temps réel du profil utilisateur
           setupUserProfileListener(_user.uid);

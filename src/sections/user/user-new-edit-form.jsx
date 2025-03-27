@@ -1,4 +1,5 @@
 import { z as zod } from 'zod';
+import { useBoolean } from 'minimal-shared/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
 import { isValidPhoneNumber } from 'react-phone-number-input/input';
@@ -12,25 +13,19 @@ import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Dialog from '@mui/material/Dialog';
-import Alert from '@mui/material/Alert';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
+
+import { useAuth } from 'src/hooks/use-auth';
+import { deleteUserCompletely, updateOrCreateUserData } from 'src/hooks/use-users';
 
 import { fData } from 'src/utils/format-number';
 
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
-import { Form, Field, schemaHelper } from 'src/components/hook-form';
 import { ConfirmDialog } from 'src/components/custom-dialog';
-
-import { useAuth } from 'src/hooks/use-auth';
-import { updateOrCreateUserData, deleteUserCompletely } from 'src/hooks/use-users';
-import { useBoolean } from 'minimal-shared/hooks';
+import { Form, Field, schemaHelper } from 'src/components/hook-form';
 
 // ----------------------------------------------------------------------
 

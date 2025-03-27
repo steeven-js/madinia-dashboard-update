@@ -479,10 +479,10 @@ export const deleteUserCompletely = async (userId) => {
       const avatarsList = await listAll(avatarsRef);
       const deletePromises = avatarsList.items.map((itemRef) => deleteObject(itemRef));
       await Promise.all(deletePromises);
-    } catch (error) {
+    } catch (storageError) {
       // Ignorer l'erreur si le dossier n'existe pas
-      if (!error.message.includes('does not exist')) {
-        console.warn('Erreur lors de la suppression des avatars:', error);
+      if (!storageError.message.includes('does not exist')) {
+        console.warn('Erreur lors de la suppression des avatars:', storageError);
       }
     }
 
@@ -492,10 +492,10 @@ export const deleteUserCompletely = async (userId) => {
       const coversList = await listAll(coversRef);
       const deletePromises = coversList.items.map((itemRef) => deleteObject(itemRef));
       await Promise.all(deletePromises);
-    } catch (error) {
+    } catch (storageError) {
       // Ignorer l'erreur si le dossier n'existe pas
-      if (!error.message.includes('does not exist')) {
-        console.warn('Erreur lors de la suppression des couvertures:', error);
+      if (!storageError.message.includes('does not exist')) {
+        console.warn('Erreur lors de la suppression des couvertures:', storageError);
       }
     }
 
@@ -513,9 +513,9 @@ export const deleteUserCompletely = async (userId) => {
       try {
         // Cela ne fonctionnera que si l'utilisateur s'est connecté récemment
         await deleteUser(AUTH.currentUser);
-      } catch (error) {
-        // console.warn('Impossible de supprimer l\'utilisateur dans Firebase Auth:', error.message);
-        // Continuer malgré l'erreur car nous avons déjà supprimé les données Firestore et Storage
+      } catch {
+        // Ignorer l'erreur car nous avons déjà supprimé les données Firestore et Storage
+        // La suppression dans Auth nécessite généralement une ré-authentification récente
       }
     } else {
       // console.warn(
@@ -527,9 +527,9 @@ export const deleteUserCompletely = async (userId) => {
 
     toast.success('Utilisateur supprimé avec succès de Firestore et Storage!');
     return true;
-  } catch (error) {
-    console.error('Erreur lors de la suppression de l\'utilisateur:', error);
+  } catch (err) {
+    console.error('Erreur lors de la suppression de l\'utilisateur:', err);
     toast.error('Une erreur est survenue lors de la suppression de l\'utilisateur');
-    throw error;
+    throw err;
   }
 };
