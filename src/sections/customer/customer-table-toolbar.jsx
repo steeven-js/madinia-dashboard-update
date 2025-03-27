@@ -2,15 +2,10 @@ import { useCallback } from 'react';
 import { usePopover } from 'minimal-shared/hooks';
 
 import Box from '@mui/material/Box';
-import Select from '@mui/material/Select';
 import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
-import Checkbox from '@mui/material/Checkbox';
 import TextField from '@mui/material/TextField';
-import InputLabel from '@mui/material/InputLabel';
 import IconButton from '@mui/material/IconButton';
-import FormControl from '@mui/material/FormControl';
-import OutlinedInput from '@mui/material/OutlinedInput';
 import InputAdornment from '@mui/material/InputAdornment';
 
 import { Iconify } from 'src/components/iconify';
@@ -27,17 +22,6 @@ export function CustomerTableToolbar({ filters, options, onResetPage }) {
     (event) => {
       onResetPage();
       updateFilters({ name: event.target.value });
-    },
-    [onResetPage, updateFilters]
-  );
-
-  const handleFilterRole = useCallback(
-    (event) => {
-      const newValue =
-        typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value;
-
-      onResetPage();
-      updateFilters({ role: newValue });
     },
     [onResetPage, updateFilters]
   );
@@ -80,7 +64,7 @@ export function CustomerTableToolbar({ filters, options, onResetPage }) {
           alignItems: { xs: 'flex-end', md: 'center' },
         }}
       >
-        <FormControl sx={{ flexShrink: 0, width: { xs: 1, md: 200 } }}>
+        {/* <FormControl sx={{ flexShrink: 0, width: { xs: 1, md: 200 } }}>
           <InputLabel htmlFor="filter-role-select">Role</InputLabel>
           <Select
             multiple
@@ -102,7 +86,7 @@ export function CustomerTableToolbar({ filters, options, onResetPage }) {
               </MenuItem>
             ))}
           </Select>
-        </FormControl>
+        </FormControl> */}
 
         <Box
           sx={{
