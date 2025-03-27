@@ -12,11 +12,13 @@ import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 
 import { fData } from 'src/utils/format-number';
+import { paths } from 'src/routes/paths';
 
 import { toast } from 'src/components/snackbar';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
 
-import { useMockedUser } from 'src/auth/hooks';
+import { useAuth } from 'src/hooks/use-auth';
+import { updateOrCreateUserData } from 'src/hooks/use-users';
 
 // ----------------------------------------------------------------------
 
@@ -26,17 +28,19 @@ export const UpdateUserSchema = zod.object({
     .string()
     .min(1, { message: 'Email is required!' })
     .email({ message: 'Email must be a valid email address!' }),
-  photoURL: schemaHelper.file({ message: 'Avatar is required!' }),
-  phoneNumber: schemaHelper.phoneNumber({ isValid: isValidPhoneNumber }),
-  country: schemaHelper.nullableInput(zod.string().min(1, { message: 'Country is required!' }), {
-    // message for null value
-    message: 'Country is required!',
-  }),
-  address: zod.string().min(1, { message: 'Address is required!' }),
-  state: zod.string().min(1, { message: 'State is required!' }),
-  city: zod.string().min(1, { message: 'City is required!' }),
-  zipCode: zod.string().min(1, { message: 'Zip code is required!' }),
-  about: zod.string().min(1, { message: 'About is required!' }),
+  photoURL: zod.union([
+    schemaHelper.file({ message: 'Invalid file format' }).optional(),
+    zod.string().url().optional(),
+    zod.literal(null).optional(),
+  ]),
+  // Optional fields
+  phoneNumber: schemaHelper.phoneNumber({ isValid: isValidPhoneNumber }).optional().nullable(),
+  country: zod.string().optional().nullable(),
+  address: zod.string().optional().nullable(),
+  state: zod.string().optional().nullable(),
+  city: zod.string().optional().nullable(),
+  zipCode: zod.string().optional().nullable(),
+  about: zod.string().optional().nullable(),
   // Not required
   isPublic: zod.boolean(),
 });
@@ -44,28 +48,46 @@ export const UpdateUserSchema = zod.object({
 // ----------------------------------------------------------------------
 
 export function AccountGeneral() {
-  const { user } = useMockedUser();
+  const { user, userProfile } = useAuth();
+
+  // Log des valeurs récupérées depuis Firebase Auth
+  // console.log('Firebase Auth user:', {
+  //   uid: user?.uid,
+  //   displayName: user?.displayName,
+  //   photoURL: user?.photoURL,
+  //   email: user?.email,
+  //   phoneNumber: user?.phoneNumber,
+  // });
+
+  // Log des valeurs du profil Firestore
+  // console.log('Firestore userProfile:', userProfile);
 
   const currentUser = {
-    displayName: user?.displayName,
-    email: user?.email,
-    photoURL: user?.photoURL,
-    phoneNumber: user?.phoneNumber,
-    country: user?.country,
-    address: user?.address,
-    state: user?.state,
-    city: user?.city,
-    zipCode: user?.zipCode,
-    about: user?.about,
-    isPublic: user?.isPublic,
+    id: user?.uid,
+    displayName: userProfile?.displayName || user?.displayName || '',
+    firstName: userProfile?.firstName || '',
+    lastName: userProfile?.lastName || '',
+    email: userProfile?.email || user?.email || '',
+    photoURL: userProfile?.avatarUrl || user?.photoURL || null,
+    phoneNumber: userProfile?.phoneNumber || user?.phoneNumber || '',
+    country: userProfile?.country || '',
+    address: userProfile?.address || '',
+    state: userProfile?.state || '',
+    city: userProfile?.city || '',
+    zipCode: userProfile?.zipCode || '',
+    about: userProfile?.about || '',
+    isPublic: userProfile?.isPublic || false,
   };
+
+  // Log du currentUser construit
+  // console.log('Current user constructed:', currentUser);
 
   const defaultValues = {
     displayName: '',
     email: '',
     photoURL: null,
     phoneNumber: '',
-    country: null,
+    country: '',
     address: '',
     state: '',
     city: '',
@@ -77,8 +99,10 @@ export function AccountGeneral() {
   const methods = useForm({
     mode: 'all',
     resolver: zodResolver(UpdateUserSchema),
-    defaultValues,
-    values: currentUser,
+    defaultValues: {
+      ...defaultValues,
+      ...currentUser,
+    },
   });
 
   const {
@@ -88,11 +112,61 @@ export function AccountGeneral() {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      toast.success('Update success!');
-      console.info('DATA', data);
+      // console.log('Form data submitted:', data);
+      // console.log('photoURL type:', typeof data.photoURL, data.photoURL instanceof File);
+
+      // if (data.photoURL) {
+      //   if (data.photoURL instanceof File) {
+      //     console.log('photoURL is a File object:', data.photoURL.name, data.photoURL.size);
+      //   } else if (typeof data.photoURL === 'string') {
+      //     console.log('photoURL is a string URL:', data.photoURL);
+      //   } else {
+      //     console.log('photoURL is another type:', Object.prototype.toString.call(data.photoURL));
+      //   }
+      // } else {
+      //   console.log('photoURL is null or undefined');
+      // }
+
+      // Extract first name and last name from display name if possible
+      const nameParts = data.displayName.trim().split(' ');
+      const lastName = nameParts.length > 0 ? nameParts[0] : '';
+      const firstName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+
+      // Prepare data for update
+      const updateData = {
+        ...data,
+        firstName,
+        lastName,
+      };
+
+      // Gestion spéciale de l'avatar
+      // Si photoURL est un objet File, utilisez-le comme avatarUrl
+      // Sinon, utilisez l'avatar existant
+      if (data.photoURL instanceof File) {
+        updateData.avatarUrl = data.photoURL;
+        // console.log('Using new File for avatarUrl');
+      } else if (typeof data.photoURL === 'string') {
+        updateData.avatarUrl = data.photoURL;
+        // console.log('Using string URL for avatarUrl:', data.photoURL);
+      } else if (currentUser.photoURL) {
+        updateData.avatarUrl = currentUser.photoURL;
+        // console.log('Using existing photoURL for avatarUrl:', currentUser.photoURL);
+      } else {
+        // console.log('No avatarUrl set');
+      }
+
+      // console.log('Data being sent to updateOrCreateUserData:', { currentUser, updateData });
+
+      // Call the update function
+      await updateOrCreateUserData({
+        currentUser,
+        data: updateData,
+      });
+
+      toast.success('Profile updated successfully!');
     } catch (error) {
-      console.error(error);
+      console.error('Error updating profile:', error);
+      toast.error('Failed to update profile');
     }
   });
 
@@ -110,6 +184,7 @@ export function AccountGeneral() {
           >
             <Field.UploadAvatar
               name="photoURL"
+              accept="image/*"
               maxSize={3145728}
               helperText={
                 <Typography
