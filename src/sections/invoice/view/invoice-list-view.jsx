@@ -1,6 +1,6 @@
 import { sumBy } from 'es-toolkit';
-import { useState, useCallback } from 'react';
 import { varAlpha } from 'minimal-shared/utils';
+import { useState, useEffect, useCallback } from 'react';
 import { useBoolean, useSetState } from 'minimal-shared/hooks';
 
 import Box from '@mui/material/Box';
@@ -15,14 +15,17 @@ import Tooltip from '@mui/material/Tooltip';
 import TableBody from '@mui/material/TableBody';
 import { useTheme } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
 
+import { deleteInvoice, getAllInvoices } from 'src/hooks/use-invoice';
+
 import { fIsAfter, fIsBetween } from 'src/utils/format-time';
 
 import { DashboardContent } from 'src/layouts/dashboard';
-import { _invoices, INVOICE_SERVICE_OPTIONS } from 'src/_mock';
+import { INVOICE_SERVICE_OPTIONS } from 'src/_mock/_invoice';
 
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
@@ -68,7 +71,8 @@ export function InvoiceListView() {
 
   const confirmDialog = useBoolean();
 
-  const [tableData, setTableData] = useState(_invoices);
+  const [tableData, setTableData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const filters = useSetState({
     name: '',
@@ -78,6 +82,24 @@ export function InvoiceListView() {
     endDate: null,
   });
   const { state: currentFilters, setState: updateFilters } = filters;
+
+  // Charger les factures depuis Firestore
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      try {
+        setLoading(true);
+        const invoices = await getAllInvoices();
+        setTableData(invoices);
+      } catch (error) {
+        console.error('Erreur lors du chargement des factures:', error);
+        toast.error('Erreur lors du chargement des factures');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInvoices();
+  }, []);
 
   const dateError = fIsAfter(currentFilters.startDate, currentFilters.endDate);
 
@@ -142,26 +164,39 @@ export function InvoiceListView() {
   ];
 
   const handleDeleteRow = useCallback(
-    (id) => {
-      const deleteRow = tableData.filter((row) => row.id !== id);
+    async (id) => {
+      try {
+        await deleteInvoice(id);
 
-      toast.success('Delete success!');
+        const deleteRow = tableData.filter((row) => row.id !== id);
+        setTableData(deleteRow);
 
-      setTableData(deleteRow);
+        toast.success('Facture supprimée avec succès!');
 
-      table.onUpdatePageDeleteRow(dataInPage.length);
+        table.onUpdatePageDeleteRow(dataInPage.length);
+      } catch (error) {
+        console.error('Erreur lors de la suppression de la facture:', error);
+        toast.error('Erreur lors de la suppression de la facture');
+      }
     },
     [dataInPage.length, table, tableData]
   );
 
-  const handleDeleteRows = useCallback(() => {
-    const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
+  const handleDeleteRows = useCallback(async () => {
+    try {
+      // Supprimer toutes les factures sélectionnées
+      await Promise.all(table.selected.map((id) => deleteInvoice(id)));
 
-    toast.success('Delete success!');
+      const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
+      setTableData(deleteRows);
 
-    setTableData(deleteRows);
+      toast.success('Factures supprimées avec succès!');
 
-    table.onUpdatePageDeleteRows(dataInPage.length, dataFiltered.length);
+      table.onUpdatePageDeleteRows(dataInPage.length, dataFiltered.length);
+    } catch (error) {
+      console.error('Erreur lors de la suppression des factures:', error);
+      toast.error('Erreur lors de la suppression des factures');
+    }
   }, [dataFiltered.length, dataInPage.length, table, tableData]);
 
   const handleFilterStatus = useCallback(
@@ -196,6 +231,17 @@ export function InvoiceListView() {
       }
     />
   );
+
+  // Afficher un indicateur de chargement pendant le chargement des factures
+  if (loading) {
+    return (
+      <DashboardContent>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+          <CircularProgress />
+        </Box>
+      </DashboardContent>
+    );
+  }
 
   return (
     <>

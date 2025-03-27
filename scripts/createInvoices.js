@@ -90,12 +90,8 @@ function generateInvoice(index) {
   const shipping = parseFloat(faker.commerce.price({ min: 5, max: 20 }));
   const totalAmount = subtotal + taxes - discount + shipping;
 
-  // Déterminer le statut en fonction de l'index
-  const status =
-    (index % 2 && 'paid') ||
-    (index % 3 && 'pending') ||
-    (index % 4 && 'overdue') ||
-    'draft';
+  // Utiliser INVOICE_STATUS_OPTIONS pour déterminer le statut
+  const status = INVOICE_STATUS_OPTIONS[index % INVOICE_STATUS_OPTIONS.length];
 
   // Générer des dates
   const createDate = sub(new Date(), { days: index });
