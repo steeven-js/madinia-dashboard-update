@@ -78,6 +78,12 @@ const PermissionDeniedPage = lazy(() => import('src/pages/dashboard/permission')
 // Blank page
 const ParamsPage = lazy(() => import('src/pages/dashboard/params'));
 const BlankPage = lazy(() => import('src/pages/dashboard/blank'));
+// Customer
+const CustomerProfilePage = lazy(() => import('src/pages/dashboard/customer/profile'));
+const CustomerCardsPage = lazy(() => import('src/pages/dashboard/customer/cards'));
+const CustomerListPage = lazy(() => import('src/pages/dashboard/customer/list'));
+const CustomerCreatePage = lazy(() => import('src/pages/dashboard/customer/new'));
+const CustomerEditPage = lazy(() => import('src/pages/dashboard/customer/edit'));
 
 // ----------------------------------------------------------------------
 
@@ -134,6 +140,17 @@ export const dashboardRoutes = [
               { path: 'change-password', element: <AccountChangePasswordPage /> },
             ],
           },
+        ],
+      },
+      {
+        path: 'customer',
+        children: [
+          { index: true, element: <CustomerProfilePage /> },
+          { path: 'profile', element: <CustomerProfilePage /> },
+          { path: 'cards', element: <CustomerCardsPage /> },
+          { path: 'list', element: <CustomerListPage /> },
+          { path: 'new', element: <CustomerCreatePage /> },
+          { path: ':id/edit', element: <CustomerEditPage /> },
         ],
       },
       {

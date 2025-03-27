@@ -78,6 +78,19 @@ export const navData = [
         ],
       },
       {
+        title: 'Customer',
+        path: paths.dashboard.customer.root,
+        icon: ICONS.user,
+        roles: ['super_admin', 'admin'],
+        children: [
+          { title: 'Profile', path: paths.dashboard.customer.root },
+          { title: 'Cards', path: paths.dashboard.customer.cards },
+          { title: 'List', path: paths.dashboard.customer.list },
+          { title: 'Create', path: paths.dashboard.customer.new },
+          { title: 'Edit', path: paths.dashboard.customer.demo.edit },
+        ],
+      },
+      {
         title: 'Product',
         path: paths.dashboard.product.root,
         icon: ICONS.product,
