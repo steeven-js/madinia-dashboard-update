@@ -2,6 +2,7 @@ import { z as zod } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { isValidPhoneNumber } from 'react-phone-number-input/input';
+import { useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -10,15 +11,18 @@ import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
+import Alert from '@mui/material/Alert';
 
 import { fData } from 'src/utils/format-number';
 import { paths } from 'src/routes/paths';
 
 import { toast } from 'src/components/snackbar';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
+import { ConfirmDialog } from 'src/components/custom-dialog';
 
 import { useAuth } from 'src/hooks/use-auth';
-import { updateOrCreateUserData } from 'src/hooks/use-users';
+import { updateOrCreateUserData, deleteUserCompletely } from 'src/hooks/use-users';
+import { useBoolean } from 'minimal-shared/hooks';
 
 // ----------------------------------------------------------------------
 
@@ -48,22 +52,20 @@ export const UpdateUserSchema = zod.object({
 // ----------------------------------------------------------------------
 
 export function AccountGeneral() {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, userId, role, loading } = useAuth();
+  const confirmDelete = useBoolean();
+  const deleteLoading = useBoolean();
 
-  // Log des valeurs récupérées depuis Firebase Auth
-  // console.log('Firebase Auth user:', {
-  //   uid: user?.uid,
-  //   displayName: user?.displayName,
-  //   photoURL: user?.photoURL,
-  //   email: user?.email,
-  //   phoneNumber: user?.phoneNumber,
-  // });
+  // console.log('AccountGeneral - Chargement en cours:', loading);
+  // console.log('AccountGeneral - Utilisateur Firebase:', user);
+  // console.log('AccountGeneral - ID Utilisateur:', userId);
+  // console.log('AccountGeneral - Profil Utilisateur:', userProfile);
+  // console.log('AccountGeneral - Rôle Utilisateur:', role);
 
-  // Log des valeurs du profil Firestore
-  // console.log('Firestore userProfile:', userProfile);
+  const isSuperAdmin = role === 'super_admin';
 
   const currentUser = {
-    id: user?.uid,
+    id: userId,
     displayName: userProfile?.displayName || user?.displayName || '',
     firstName: userProfile?.firstName || '',
     lastName: userProfile?.lastName || '',
@@ -78,9 +80,6 @@ export function AccountGeneral() {
     about: userProfile?.about || '',
     isPublic: userProfile?.isPublic || false,
   };
-
-  // Log du currentUser construit
-  // console.log('Current user constructed:', currentUser);
 
   const defaultValues = {
     displayName: '',
@@ -99,33 +98,33 @@ export function AccountGeneral() {
   const methods = useForm({
     mode: 'all',
     resolver: zodResolver(UpdateUserSchema),
-    defaultValues: {
-      ...defaultValues,
-      ...currentUser,
-    },
+    defaultValues,
   });
 
   const {
+    reset,
     handleSubmit,
+    setValue,
     formState: { isSubmitting },
   } = methods;
 
+  // Mettre à jour les valeurs du formulaire quand les données utilisateur sont chargées
+  useEffect(() => {
+    if (!loading && currentUser) {
+      // Mettre à jour chaque champ individuellement
+      Object.entries(currentUser).forEach(([field, value]) => {
+        // Ne pas mettre à jour l'ID ou les champs non présents dans le formulaire
+        if (field !== 'id' && field in defaultValues) {
+          setValue(field, value);
+        }
+      });
+      // console.log('Formulaire mis à jour avec les données utilisateur', currentUser);
+    }
+  }, [loading, currentUser, setValue]);
+
   const onSubmit = handleSubmit(async (data) => {
     try {
-      // console.log('Form data submitted:', data);
-      // console.log('photoURL type:', typeof data.photoURL, data.photoURL instanceof File);
-
-      // if (data.photoURL) {
-      //   if (data.photoURL instanceof File) {
-      //     console.log('photoURL is a File object:', data.photoURL.name, data.photoURL.size);
-      //   } else if (typeof data.photoURL === 'string') {
-      //     console.log('photoURL is a string URL:', data.photoURL);
-      //   } else {
-      //     console.log('photoURL is another type:', Object.prototype.toString.call(data.photoURL));
-      //   }
-      // } else {
-      //   console.log('photoURL is null or undefined');
-      // }
+      // console.log('Données soumises:', data);
 
       // Extract first name and last name from display name if possible
       const nameParts = data.displayName.trim().split(' ');
@@ -140,22 +139,15 @@ export function AccountGeneral() {
       };
 
       // Gestion spéciale de l'avatar
-      // Si photoURL est un objet File, utilisez-le comme avatarUrl
-      // Sinon, utilisez l'avatar existant
       if (data.photoURL instanceof File) {
         updateData.avatarUrl = data.photoURL;
-        // console.log('Using new File for avatarUrl');
       } else if (typeof data.photoURL === 'string') {
         updateData.avatarUrl = data.photoURL;
-        // console.log('Using string URL for avatarUrl:', data.photoURL);
       } else if (currentUser.photoURL) {
         updateData.avatarUrl = currentUser.photoURL;
-        // console.log('Using existing photoURL for avatarUrl:', currentUser.photoURL);
-      } else {
-        // console.log('No avatarUrl set');
       }
 
-      // console.log('Data being sent to updateOrCreateUserData:', { currentUser, updateData });
+      // console.log('Données pour mise à jour:', { currentUser, updateData });
 
       // Call the update function
       await updateOrCreateUserData({
@@ -164,11 +156,56 @@ export function AccountGeneral() {
       });
 
       toast.success('Profile updated successfully!');
+
+      // Plus besoin de rafraîchir manuellement car onSnapshot capture les mises à jour
     } catch (error) {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile');
     }
   });
+
+  const handleDeleteUser = async () => {
+    if (!userId) return;
+
+    deleteLoading.onTrue();
+    try {
+      await deleteUserCompletely(userId);
+      toast.success('User deleted successfully');
+      reset();
+      // Rediriger vers la page de connexion
+      window.location.href = '/auth/firebase/sign-in';
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast.error('Failed to delete user');
+    } finally {
+      deleteLoading.onFalse();
+      confirmDelete.onFalse();
+    }
+  };
+
+  const renderConfirmDeleteDialog = () => (
+    <ConfirmDialog
+      open={confirmDelete.value}
+      onClose={confirmDelete.onFalse}
+      title="Delete Account"
+      content="Are you sure you want to permanently delete your account? This action cannot be undone."
+      action={
+        <LoadingButton
+          variant="contained"
+          color="error"
+          onClick={handleDeleteUser}
+          loading={deleteLoading.value}
+        >
+          Delete
+        </LoadingButton>
+      }
+    />
+  );
+
+  // Afficher une alerte de chargement si les données sont en cours de chargement
+  if (loading) {
+    return <Alert severity="info">Loading user data...</Alert>;
+  }
 
   return (
     <Form methods={methods} onSubmit={onSubmit}>
@@ -210,8 +247,8 @@ export function AccountGeneral() {
               sx={{ mt: 5 }}
             />
 
-            <Button variant="soft" color="error" sx={{ mt: 3 }}>
-              Delete user
+            <Button variant="soft" color="error" sx={{ mt: 3 }} onClick={confirmDelete.onTrue}>
+              Delete account
             </Button>
           </Card>
         </Grid>
@@ -248,6 +285,8 @@ export function AccountGeneral() {
           </Card>
         </Grid>
       </Grid>
+
+      {renderConfirmDeleteDialog()}
     </Form>
   );
 }

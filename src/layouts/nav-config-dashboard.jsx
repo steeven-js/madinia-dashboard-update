@@ -67,6 +67,7 @@ export const navData = [
         title: 'User',
         path: paths.dashboard.user.root,
         icon: ICONS.user,
+        roles: ['super_admin', 'admin'],
         children: [
           { title: 'Profile', path: paths.dashboard.user.root },
           { title: 'Cards', path: paths.dashboard.user.cards },

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { updateProfile, updatePassword, onAuthStateChanged } from 'firebase/auth';
 
 import { CONFIG } from 'src/global-config';
@@ -25,50 +25,113 @@ export function useAuth() {
   const [role, setRole] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState(null);
+  const unsubscribeRef = useRef(null);
+
+  /**
+   * Convertit les timestamps Firestore en millisecondes
+   * @param {Date|FirebaseTimestamp|number|null} timestamp - Timestamp à convertir
+   * @returns {number|null} Timestamp en millisecondes ou null
+   */
+  const serializeTimestamp = (timestamp) => {
+    if (!timestamp) return null;
+    // Conversion depuis Timestamp Firestore
+    if (timestamp?.toMillis) {
+      return timestamp.toMillis();
+    }
+    // Conversion depuis Date
+    if (timestamp instanceof Date) {
+      return timestamp.getTime();
+    }
+    // Déjà en millisecondes
+    if (typeof timestamp === 'number') {
+      return timestamp;
+    }
+    return null;
+  };
+
+  /**
+   * Sérialise l'ensemble du profil utilisateur en convertissant les timestamps
+   * @param {Object|null} profile - Profil utilisateur brut
+   * @returns {Object|null} Profil sérialisé
+   */
+  const serializeProfile = (profile) => {
+    if (!profile) return null;
+
+    const serialized = { ...profile };
+
+    // Conversion des champs temporels
+    ['createdAt', 'updatedAt', 'lastConnection'].forEach((field) => {
+      if (profile[field]) {
+        serialized[field] = serializeTimestamp(profile[field]);
+      }
+    });
+
+    return serialized;
+  };
+
+  /**
+   * Configure une écoute en temps réel sur le profil utilisateur dans Firestore
+   * @param {string} uid - ID de l'utilisateur
+   */
+  const setupUserProfileListener = useCallback((uid) => {
+    // Nettoyer l'abonnement précédent s'il existe
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
+      unsubscribeRef.current = null;
+    }
+
+    if (!uid) return;
+
+    // console.log('Configuration de l\'écoute en temps réel pour l\'utilisateur:', uid);
+    const userProfileRef = doc(FIRESTORE, 'users', uid);
+
+    unsubscribeRef.current = onSnapshot(
+      userProfileRef,
+      (docSnapshot) => {
+        if (docSnapshot.exists()) {
+          const profileData = docSnapshot.data();
+          const serializedProfile = serializeProfile(profileData);
+
+          // console.log('Mise à jour du profil utilisateur détectée:', serializedProfile);
+
+          setUserProfile(serializedProfile);
+
+          // Actualiser le rôle si nécessaire
+          const userRole = profileData?.role || 'user';
+          const validRole = CONFIG.roles[userRole] ? userRole : 'user';
+          setRole(validRole);
+        } else {
+          // console.log("Le profil utilisateur n'existe pas");
+          setUserProfile(null);
+          setRole('user');
+        }
+      },
+      (err) => {
+        console.error('Erreur lors de l\'écoute du profil utilisateur:', err);
+        setError(err.message);
+      }
+    );
+  }, []);
+
+  // Fonction pour rafraîchir le profil utilisateur manuellement (fallback)
+  const refreshUserProfile = async () => {
+    if (!userId) return;
+
+    // console.log('Rafraîchissement manuel du profil utilisateur...');
+    try {
+      // Actualiser Firebase Auth user
+      if (AUTH.currentUser) {
+        // Forcer l'actualisation du token
+        await AUTH.currentUser.getIdToken(true);
+        setLocalUser(AUTH.currentUser);
+      }
+    } catch (err) {
+      console.error('Erreur lors du rafraîchissement manuel du profil:', err);
+      setError(err.message);
+    }
+  };
 
   useEffect(() => {
-    /**
-     * Convertit les timestamps Firestore en millisecondes
-     * @param {Date|FirebaseTimestamp|number|null} timestamp - Timestamp à convertir
-     * @returns {number|null} Timestamp en millisecondes ou null
-     */
-    const serializeTimestamp = (timestamp) => {
-      if (!timestamp) return null;
-      // Conversion depuis Timestamp Firestore
-      if (timestamp?.toMillis) {
-        return timestamp.toMillis();
-      }
-      // Conversion depuis Date
-      if (timestamp instanceof Date) {
-        return timestamp.getTime();
-      }
-      // Déjà en millisecondes
-      if (typeof timestamp === 'number') {
-        return timestamp;
-      }
-      return null;
-    };
-
-    /**
-     * Sérialise l'ensemble du profil utilisateur en convertissant les timestamps
-     * @param {Object|null} profile - Profil utilisateur brut
-     * @returns {Object|null} Profil sérialisé
-     */
-    const serializeProfile = (profile) => {
-      if (!profile) return null;
-
-      const serialized = { ...profile };
-
-      // Conversion des champs temporels
-      ['createdAt', 'updatedAt', 'lastConnection'].forEach((field) => {
-        if (profile[field]) {
-          serialized[field] = serializeTimestamp(profile[field]);
-        }
-      });
-
-      return serialized;
-    };
-
     // Souscription aux changements d'état d'authentification
     const unsubscribe = onAuthStateChanged(AUTH, async (_user) => {
       if (_user) {
@@ -81,26 +144,9 @@ export function useAuth() {
           // Récupération des custom claims
           const idTokenResult = await _user.getIdTokenResult();
 
-          // Récupération du profil Firestore
-          const userProfileDoc = await getDoc(doc(FIRESTORE, 'users', _user.uid));
-          if (userProfileDoc.exists()) {
-            const profileData = userProfileDoc.data();
+          // Configurer l'écoute en temps réel du profil utilisateur
+          setupUserProfileListener(_user.uid);
 
-            // Determine role with proper fallback
-            const userRole = idTokenResult.claims.role || profileData?.role || 'user';
-
-            // Validate role exists in CONFIG
-            const validRole = CONFIG.roles[userRole] ? userRole : 'user';
-
-            const serializedProfile = serializeProfile(profileData);
-            setUserProfile(serializedProfile);
-            setRole(validRole);
-
-          } else {
-            console.log("User profile doesn't exist");
-            setUserProfile(null);
-            setRole('user');
-          }
         } catch (err) {
           console.error('Error fetching user profile:', err);
           setError(err.message);
@@ -113,13 +159,24 @@ export function useAuth() {
         setRole(null);
         setIsAuthenticated(false);
         setError(null);
+
+        // Nettoyer l'abonnement précédent s'il existe
+        if (unsubscribeRef.current) {
+          unsubscribeRef.current();
+          unsubscribeRef.current = null;
+        }
       }
       setLoading(false);
     });
 
-    // Nettoyage de la souscription
-    return unsubscribe;
-  }, []);
+    // Nettoyage des souscriptions
+    return () => {
+      unsubscribe();
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+      }
+    };
+  }, [setupUserProfileListener]);
 
   return {
     user,
@@ -131,6 +188,7 @@ export function useAuth() {
     isAuthenticated,
     hasPermission: (permission) => hasRolePermission(role, permission),
     hasMinimumLevel: (level) => hasRoleLevel(role, level),
+    refreshUserProfile,
   };
 }
 

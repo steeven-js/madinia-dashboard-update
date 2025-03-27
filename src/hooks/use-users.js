@@ -227,6 +227,10 @@ export const useUserById = (id) => {
  * @param {Object} params.currentUser - Utilisateur actuel
  * @param {Object} params.data - Données à mettre à jour
  * @returns {Promise<void>}
+ *
+ * Note: Grâce à l'écoute en temps réel configurée avec onSnapshot dans le hook useAuth,
+ * les modifications apportées par cette fonction seront automatiquement reflétées dans l'interface utilisateur,
+ * sans qu'il soit nécessaire d'appeler refreshUserProfile ou de recharger la page.
  */
 export async function updateOrCreateUserData({ currentUser, data }) {
   if (!currentUser?.id) {
@@ -234,7 +238,7 @@ export async function updateOrCreateUserData({ currentUser, data }) {
   }
 
   try {
-    console.log('Début de la mise à jour:', { currentUser, data });
+    // console.log('Début de la mise à jour:', { currentUser, data });
 
     let avatarUrl = null;
     let coverUrl = null;
@@ -247,7 +251,7 @@ export async function updateOrCreateUserData({ currentUser, data }) {
           const { avatarUrl: oldAvatarUrl } = currentUser;
           const oldAvatarRef = ref(FIREBASE_STORAGE, oldAvatarUrl);
           await deleteObject(oldAvatarRef);
-          console.log('Ancienne image supprimée avec succès');
+          // console.log('Ancienne image supprimée avec succès');
         } catch (error) {
           console.warn('Erreur lors de la suppression de l\'ancienne image:', error);
         }
@@ -275,7 +279,7 @@ export async function updateOrCreateUserData({ currentUser, data }) {
           const { coverUrl: oldCoverUrl } = currentUser;
           const oldCoverRef = ref(FIREBASE_STORAGE, oldCoverUrl);
           await deleteObject(oldCoverRef);
-          console.log('Ancienne image de couverture supprimée avec succès');
+          // console.log('Ancienne image de couverture supprimée avec succès');
         } catch (error) {
           console.warn('Erreur lors de la suppression de l\'ancienne image de couverture:', error);
         }
@@ -390,7 +394,7 @@ export const updateFastUsers = async ({ data }) => {
  * @returns {Promise<void>}
  */
 export const updateUserRole = async (userId, newRole) => {
-  console.log('updateUserRole called with:', { userId, newRole });
+  // console.log('updateUserRole called with:', { userId, newRole });
 
   if (!userId) {
     throw new Error("L'ID de l'utilisateur est requis");
@@ -415,7 +419,7 @@ export const updateUserRole = async (userId, newRole) => {
       updatedAt: serverTimestamp()
     };
 
-    console.log('Updating user role with:', { userId, newRole, userData });
+    // console.log('Updating user role with:', { userId, newRole, userData });
 
     await updateDoc(userRef, userData);
 
@@ -458,7 +462,7 @@ export const updateUserStatus = async (userId, newStatus) => {
 
 /**
  * Supprime complètement un utilisateur (Firestore et Storage)
- * Note: La suppression dans Firebase Auth nécessite une Cloud Function avec Admin SDK
+ * Note: La suppression dans Firebase Auth nécessite une Cloud Function
  * @param {string} userId - ID de l'utilisateur à supprimer
  * @returns {Promise<void>}
  */
@@ -510,15 +514,15 @@ export const deleteUserCompletely = async (userId) => {
         // Cela ne fonctionnera que si l'utilisateur s'est connecté récemment
         await deleteUser(AUTH.currentUser);
       } catch (error) {
-        console.warn('Impossible de supprimer l\'utilisateur dans Firebase Auth:', error.message);
+        // console.warn('Impossible de supprimer l\'utilisateur dans Firebase Auth:', error.message);
         // Continuer malgré l'erreur car nous avons déjà supprimé les données Firestore et Storage
       }
     } else {
-      console.warn(
-        'ATTENTION: L\'utilisateur a été supprimé de Firestore et Storage, ' +
-        'mais PAS de Firebase Auth. Pour une suppression complète, ' +
-        'implémentez une Cloud Function utilisant Firebase Admin SDK.'
-      );
+      // console.warn(
+      //   'ATTENTION: L\'utilisateur a été supprimé de Firestore et Storage, ' +
+      //   'mais PAS de Firebase Auth. Pour une suppression complète, ' +
+      //   'implémentez une Cloud Function utilisant Firebase Admin SDK.'
+      // );
     }
 
     toast.success('Utilisateur supprimé avec succès de Firestore et Storage!');

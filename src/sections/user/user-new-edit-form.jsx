@@ -12,6 +12,11 @@ import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Dialog from '@mui/material/Dialog';
+import Alert from '@mui/material/Alert';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -21,6 +26,11 @@ import { fData } from 'src/utils/format-number';
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
+import { ConfirmDialog } from 'src/components/custom-dialog';
+
+import { useAuth } from 'src/hooks/use-auth';
+import { updateOrCreateUserData, deleteUserCompletely } from 'src/hooks/use-users';
+import { useBoolean } from 'minimal-shared/hooks';
 
 // ----------------------------------------------------------------------
 
@@ -51,6 +61,11 @@ export const NewUserSchema = zod.object({
 
 export function UserNewEditForm({ currentUser }) {
   const router = useRouter();
+  const { role: currentUserRole } = useAuth();
+  const confirmDelete = useBoolean();
+  const deleteLoading = useBoolean();
+
+  const isSuperAdmin = currentUserRole === 'super_admin';
 
   const defaultValues = {
     status: '',
@@ -87,15 +102,62 @@ export function UserNewEditForm({ currentUser }) {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      if (currentUser) {
+        // Update user
+        await updateOrCreateUserData({
+          currentUser,
+          data,
+        });
+      } else {
+        // Create user - Implement this with your API
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+
       reset();
       toast.success(currentUser ? 'Update success!' : 'Create success!');
       router.push(paths.dashboard.user.list);
       console.info('DATA', data);
     } catch (error) {
       console.error(error);
+      toast.error('Failed to save user data');
     }
   });
+
+  const handleDeleteUser = async () => {
+    if (!currentUser?.id) return;
+
+    deleteLoading.onTrue();
+    try {
+      await deleteUserCompletely(currentUser.id);
+      toast.success('User deleted successfully');
+      router.push(paths.dashboard.user.list);
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast.error('Failed to delete user');
+    } finally {
+      deleteLoading.onFalse();
+      confirmDelete.onFalse();
+    }
+  };
+
+  const renderConfirmDeleteDialog = () => (
+    <ConfirmDialog
+      open={confirmDelete.value}
+      onClose={confirmDelete.onFalse}
+      title="Delete User"
+      content="Are you sure you want to permanently delete this user? This action cannot be undone."
+      action={
+        <LoadingButton
+          variant="contained"
+          color="error"
+          onClick={handleDeleteUser}
+          loading={deleteLoading.value}
+        >
+          Delete
+        </LoadingButton>
+      }
+    />
+  );
 
   return (
     <Form methods={methods} onSubmit={onSubmit}>
@@ -190,9 +252,9 @@ export function UserNewEditForm({ currentUser }) {
               sx={{ mx: 0, width: 1, justifyContent: 'space-between' }}
             />
 
-            {currentUser && (
+            {currentUser && isSuperAdmin && (
               <Stack sx={{ mt: 3, alignItems: 'center', justifyContent: 'center' }}>
-                <Button variant="soft" color="error">
+                <Button variant="soft" color="error" onClick={confirmDelete.onTrue}>
                   Delete user
                 </Button>
               </Stack>
@@ -241,6 +303,8 @@ export function UserNewEditForm({ currentUser }) {
           </Card>
         </Grid>
       </Grid>
+
+      {renderConfirmDeleteDialog()}
     </Form>
   );
 }

@@ -18,6 +18,10 @@ import { USER_STATUS_OPTIONS } from 'src/_mock';
 import { toast } from 'src/components/snackbar';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
 
+import { useAuth } from 'src/hooks/use-auth';
+import { updateOrCreateUserData, updateUserRole, updateUserStatus } from 'src/hooks/use-users';
+import { CONFIG } from 'src/global-config';
+
 // ----------------------------------------------------------------------
 
 export const UserQuickEditSchema = zod.object({
@@ -44,6 +48,9 @@ export const UserQuickEditSchema = zod.object({
 // ----------------------------------------------------------------------
 
 export function UserQuickEditForm({ currentUser, open, onClose }) {
+  const { role: currentUserRole } = useAuth();
+  const isSuperAdmin = currentUserRole === 'super_admin';
+
   const defaultValues = {
     name: '',
     email: '',
@@ -72,23 +79,48 @@ export function UserQuickEditForm({ currentUser, open, onClose }) {
   } = methods;
 
   const onSubmit = handleSubmit(async (data) => {
-    const promise = new Promise((resolve) => setTimeout(resolve, 1000));
-
     try {
-      reset();
-      onClose();
+      // Vérifier si le rôle a changé
+      if (data.role !== currentUser.role) {
+        if (isSuperAdmin) {
+          await updateUserRole(currentUser.id, data.role);
+        } else {
+          // Vérifier si l'utilisateur peut assigner ce rôle
+          const currentUserLevel = CONFIG.roles[currentUserRole]?.level || 0;
+          const targetRoleLevel = CONFIG.roles[data.role]?.level || 0;
 
-      toast.promise(promise, {
-        loading: 'Loading...',
-        success: 'Update success!',
-        error: 'Update error!',
+          if (targetRoleLevel >= currentUserLevel) {
+            toast.error("Vous n'avez pas les permissions nécessaires pour attribuer ce rôle");
+            return;
+          }
+
+          await updateUserRole(currentUser.id, data.role);
+        }
+      }
+
+      // Vérifier si le statut a changé
+      if (data.status !== currentUser.status) {
+        await updateUserStatus(currentUser.id, data.status);
+      }
+
+      // Mettre à jour les autres informations utilisateur
+      await updateOrCreateUserData({
+        currentUser: {
+          ...currentUser,
+          displayName: data.name,
+        },
+        data: {
+          ...data,
+          displayName: data.name,
+        },
       });
 
-      await promise;
-
-      console.info('DATA', data);
+      reset();
+      onClose();
+      toast.success('Update success!');
     } catch (error) {
-      console.error(error);
+      console.error('Update error:', error);
+      toast.error('Update failed: ' + (error.message || 'Unknown error'));
     }
   });
 

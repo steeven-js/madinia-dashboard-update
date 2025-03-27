@@ -1,7 +1,11 @@
 import { removeLastSlash } from 'minimal-shared/utils';
+import { useEffect } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
+import Alert from '@mui/material/Alert';
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
 
 import { paths } from 'src/routes/paths';
 import { usePathname } from 'src/routes/hooks';
@@ -11,6 +15,8 @@ import { DashboardContent } from 'src/layouts/dashboard';
 
 import { Iconify } from 'src/components/iconify';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
+
+import { useAuth } from 'src/hooks/use-auth';
 
 // ----------------------------------------------------------------------
 
@@ -46,6 +52,36 @@ const NAV_ITEMS = [
 
 export function AccountLayout({ children, ...other }) {
   const pathname = usePathname();
+  const { loading, user, userProfile, userId } = useAuth();
+
+  // console.log('AccountLayout - Chargement:', loading);
+  // console.log('AccountLayout - Utilisateur:', user);
+  // console.log('AccountLayout - Profil utilisateur:', userProfile);
+  // console.log('AccountLayout - ID utilisateur:', userId);
+
+  useEffect(() => {
+    // console.log('AccountLayout - Chemin actuel:', pathname);
+  }, [pathname]);
+
+  if (loading) {
+    return (
+      <DashboardContent {...other}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: 5 }}>
+          <CircularProgress />
+        </Box>
+      </DashboardContent>
+    );
+  }
+
+  if (!user) {
+    return (
+      <DashboardContent {...other}>
+        <Alert severity="error">
+          Impossible de charger les informations utilisateur. Veuillez vous reconnecter.
+        </Alert>
+      </DashboardContent>
+    );
+  }
 
   return (
     <DashboardContent {...other}>
