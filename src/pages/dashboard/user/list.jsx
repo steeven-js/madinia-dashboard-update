@@ -1,7 +1,7 @@
-import { Helmet } from 'react-helmet-async';
 import { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 
-import { Box, CircularProgress, Switch, FormControlLabel, Typography } from '@mui/material';
+import { Box, Switch, Typography, CircularProgress, FormControlLabel } from '@mui/material';
 
 import { useAuth } from 'src/hooks/use-auth';
 import { useUsersData } from 'src/hooks/use-users';

@@ -3,18 +3,24 @@ import { useCallback } from 'react';
 
 import Chip from '@mui/material/Chip';
 
-import { chipProps, FiltersBlock, FiltersResult } from 'src/components/filters-result';
 import { CONFIG } from 'src/global-config';
+
+import { chipProps, FiltersBlock, FiltersResult } from 'src/components/filters-result';
 
 // ----------------------------------------------------------------------
 
-export function UserTableFiltersResult({ filters, setFilters, onResetPage, totalResults, sx }) {
+export function UserTableFiltersResult({
+  filters,
+  setFilters,
+  onResetPage,
+  onReset,
+  totalResults,
+  sx,
+}) {
   const currentFilters = filters;
 
   // Fonction pour obtenir le libellé d'un rôle à partir de sa valeur
-  const getRoleLabel = (roleValue) => {
-    return CONFIG.roles[roleValue]?.label || roleValue;
-  };
+  const getRoleLabel = (roleValue) => CONFIG.roles[roleValue]?.label || roleValue;
 
   // Gestionnaire de suppression du mot-clé (recherche)
   const handleRemoveKeyword = useCallback(() => {
@@ -40,15 +46,20 @@ export function UserTableFiltersResult({ filters, setFilters, onResetPage, total
     [onResetPage, setFilters]
   );
 
-  // Gestionnaire de réinitialisation de tous les filtres
+  // Utiliser la prop onReset fournie par le composant parent
   const handleReset = useCallback(() => {
     onResetPage();
-    setFilters({
-      name: '',
-      role: [],
-      status: 'all',
-    });
-  }, [onResetPage, setFilters]);
+    if (onReset) {
+      onReset();
+    } else {
+      // Fallback au cas où onReset n'est pas fourni
+      setFilters({
+        name: '',
+        role: [],
+        status: 'all',
+      });
+    }
+  }, [onResetPage, onReset, setFilters]);
 
   return (
     <FiltersResult totalResults={totalResults} onReset={handleReset} sx={sx}>

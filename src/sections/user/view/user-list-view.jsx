@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
 import { varAlpha } from 'minimal-shared/utils';
 import { useBoolean } from 'minimal-shared/hooks';
+import { useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
@@ -149,7 +149,7 @@ export function UserListView({ users = [], currentAuthUser, onManualRefresh }) {
   const dataFiltered = applyFilter({
     inputData: tableData,
     comparator: getComparator(table.order, table.orderBy),
-    filters: filters,
+    filters,
   });
 
   const dataInPage = rowInPage(dataFiltered, table.page, table.rowsPerPage);
@@ -284,7 +284,8 @@ export function UserListView({ users = [], currentAuthUser, onManualRefresh }) {
     [table]
   );
 
-  // Gestionnaire de réinitialisation des filtres
+  // Gestionnaire de réinitialisation des filtres - Utilisé par UserTableFiltersResult
+  // via la propriété onReset - Donc ne pas supprimer
   const handleResetFilters = useCallback(() => {
     table.onResetPage();
     setFilters({
@@ -305,14 +306,6 @@ export function UserListView({ users = [], currentAuthUser, onManualRefresh }) {
     },
     [table]
   );
-
-  // Gestionnaire de sélection de toutes les lignes
-  const handleSelectAllRows = useCallback(() => {
-    table.onSelectAllRows(
-      true,
-      dataFiltered.map((row) => row.id)
-    );
-  }, [table, dataFiltered]);
 
   // Dialogue de confirmation de suppression
   const renderConfirmDialog = () => (
@@ -428,6 +421,7 @@ export function UserListView({ users = [], currentAuthUser, onManualRefresh }) {
               filters={filters}
               setFilters={setFilters}
               onResetPage={handleResetPage}
+              onReset={handleResetFilters}
               totalResults={dataFiltered.length}
               sx={{ p: 2.5, pt: 0 }}
             />
