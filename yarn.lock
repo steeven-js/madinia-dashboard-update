@@ -981,6 +981,11 @@
   dependencies:
     levn "^0.4.1"
 
+"@faker-js/faker@^9.6.0":
+  version "9.6.0"
+  resolved "https://registry.npmjs.org/@faker-js/faker/-/faker-9.6.0.tgz"
+  integrity sha512-3vm4by+B5lvsFPSyep3ELWmZfE3kicDtmemVpuwl1yH7tqtnHdsA6hG8fbXedMVdkzgtvzWoRgjSB4Q+FHnZiw==
+
 "@firebase/analytics-compat@0.2.16":
   version "0.2.16"
   resolved "https://registry.npmjs.org/@firebase/analytics-compat/-/analytics-compat-0.2.16.tgz"
