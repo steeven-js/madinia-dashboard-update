@@ -47,10 +47,10 @@ export function KanbanDetailsCommentList({ comments, columnId, taskId, onComment
   // Filtrer les commentaires qui ont des images pour les diapositives
   const imageComments = comments.filter((comment) => comment.messageType === 'image');
 
-  // Créer des diapositives pour le lightbox avec des icônes pour représenter les images
+  // Créer des diapositives pour le lightbox avec les URLs d'images directes
   const slides = imageComments.map((comment) => ({
     src: comment.message,
-    icon: <Iconify icon="solar:gallery-add-bold" width={64} height={64} />,
+    title: comment.fileName || '',
   }));
 
   const lightbox = useLightBox(slides);
@@ -203,23 +203,34 @@ export function KanbanDetailsCommentList({ comments, columnId, taskId, onComment
                   <Card sx={{ borderRadius: 1.5, overflow: 'hidden', cursor: 'pointer' }}>
                     <Box
                       sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        position: 'relative',
+                        paddingTop: '56.25%', // Ratio 16:9
                         bgcolor: 'background.neutral',
-                        p: 3,
                         transition: (theme) => theme.transitions.create(['opacity']),
-                        '&:hover': { opacity: 0.8 },
+                        '&:hover': { opacity: 0.9 },
                       }}
                       onClick={() => lightbox.onOpen(comment.message)}
                     >
-                      <Iconify icon={messageIcon} width={48} height={48} />
+                      <Image
+                        src={comment.message}
+                        alt={comment.fileName || 'Image'}
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'contain',
+                        }}
+                      />
                     </Box>
-                    <CardContent sx={{ p: 1.5 }}>
-                      <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>
-                        {comment.message}
-                      </Typography>
-                    </CardContent>
+                    {comment.fileName && (
+                      <CardContent sx={{ p: 1.5 }}>
+                        <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>
+                          {comment.fileName}
+                        </Typography>
+                      </CardContent>
+                    )}
                   </Card>
                 ) : comment.messageType === 'file' ? (
                   <Card sx={{ borderRadius: 1.5, overflow: 'hidden' }}>
