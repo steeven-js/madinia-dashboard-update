@@ -15,12 +15,15 @@ import { useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import DialogTitle from '@mui/material/DialogTitle';
 
+import { useAuth } from 'src/hooks/use-auth';
+
 import { fDate, fIsAfter, fIsBetween } from 'src/utils/format-time';
 
 import { DashboardContent } from 'src/layouts/dashboard';
 import { CALENDAR_COLOR_OPTIONS } from 'src/_mock/_calendar';
 import { updateEvent, useGetEvents } from 'src/actions/calendar';
 
+import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 
 import { CalendarRoot } from '../styles';
@@ -35,6 +38,7 @@ import { CalendarFiltersResult } from '../calendar-filters-result';
 
 export function CalendarView() {
   const theme = useTheme();
+  const { userProfile: currentAuthUser } = useAuth();
 
   const openFilters = useBoolean();
 
@@ -98,6 +102,21 @@ export function CalendarView() {
     flex: '1 1 auto',
     display: 'flex',
     flexDirection: 'column',
+  };
+
+  // Check if user can modify the given event (creator or super_admin)
+  const canModifyEvent = (eventId) => {
+    if (!eventId || !events.length) return false;
+    if (!currentAuthUser) return false;
+
+    const event = events.find((e) => e.id === eventId);
+    if (!event) return false;
+
+    // Déterminer l'ID de l'utilisateur courant pour la comparaison
+    const currentUserId = currentAuthUser.userId || currentAuthUser.uid || currentAuthUser.id || '';
+
+    // Vérifier si l'utilisateur est super_admin ou le créateur
+    return currentAuthUser?.role === 'super_admin' || event.userId === currentUserId;
   };
 
   return (
@@ -165,14 +184,113 @@ export function CalendarView() {
               select={onSelectRange}
               eventClick={onClickEvent}
               aspectRatio={3}
+              eventContent={(arg) => {
+                const event = arg.event;
+                const eventData = event.extendedProps;
+                return (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      height: '100%',
+                      width: '100%',
+                      p: 0.5,
+                    }}
+                  >
+                    {eventData.photoURL && (
+                      <Box
+                        component="img"
+                        src={eventData.photoURL}
+                        alt={eventData.userDisplayName || ''}
+                        sx={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: '50%',
+                          mr: 0.5,
+                          objectFit: 'cover',
+                          border: (t) => `solid 1px ${t.palette.background.paper}`,
+                        }}
+                      />
+                    )}
+                    <Box
+                      sx={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        width: 'calc(100% - 30px)',
+                      }}
+                    >
+                      {event.title}
+                    </Box>
+                  </Box>
+                );
+              }}
               eventDrop={(arg) => {
+                if (!canModifyEvent(arg.event.id)) {
+                  arg.revert();
+                  toast.error('Unauthorized: You do not have permission to modify this event');
+                  return;
+                }
+
                 startTransition(() => {
-                  onDropEvent(arg, updateEvent);
+                  // Récupérer l'événement complet
+                  const eventId = arg.event.id;
+                  const originalEvent = events.find((e) => e.id === eventId);
+
+                  if (!originalEvent) {
+                    arg.revert();
+                    toast.error('Event not found');
+                    return;
+                  }
+
+                  // Mettre à jour seulement les dates modifiées
+                  const updatedEvent = {
+                    ...originalEvent,
+                    allDay: arg.event.allDay,
+                    start: arg.event.startStr,
+                    end: arg.event.endStr,
+                  };
+
+                  onDropEvent(arg, (eventData) => updateEvent(updatedEvent, currentAuthUser)).catch(
+                    (error) => {
+                      arg.revert();
+                      toast.error(error.message || 'Error updating event');
+                    }
+                  );
                 });
               }}
               eventResize={(arg) => {
+                if (!canModifyEvent(arg.event.id)) {
+                  arg.revert();
+                  toast.error('Unauthorized: You do not have permission to modify this event');
+                  return;
+                }
+
                 startTransition(() => {
-                  onResizeEvent(arg, updateEvent);
+                  // Récupérer l'événement complet
+                  const eventId = arg.event.id;
+                  const originalEvent = events.find((e) => e.id === eventId);
+
+                  if (!originalEvent) {
+                    arg.revert();
+                    toast.error('Event not found');
+                    return;
+                  }
+
+                  // Mettre à jour seulement les dates modifiées
+                  const updatedEvent = {
+                    ...originalEvent,
+                    allDay: arg.event.allDay,
+                    start: arg.event.startStr,
+                    end: arg.event.endStr,
+                  };
+
+                  onResizeEvent(arg, (eventData) =>
+                    updateEvent(updatedEvent, currentAuthUser)
+                  ).catch((error) => {
+                    arg.revert();
+                    toast.error(error.message || 'Error updating event');
+                  });
                 });
               }}
               plugins={[

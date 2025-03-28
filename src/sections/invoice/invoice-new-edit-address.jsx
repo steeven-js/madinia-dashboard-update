@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useBoolean } from 'minimal-shared/hooks';
 
@@ -12,7 +12,7 @@ import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { getAllCustomers, addCustomer } from 'src/hooks/use-customer';
+import { getAllCustomers } from 'src/hooks/use-customer';
 
 import { Iconify } from 'src/components/iconify';
 

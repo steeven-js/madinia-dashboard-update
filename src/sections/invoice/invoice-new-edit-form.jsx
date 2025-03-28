@@ -7,12 +7,7 @@ import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import LoadingButton from '@mui/lab/LoadingButton';
 
-import { paths } from 'src/routes/paths';
-import { useRouter } from 'src/routes/hooks';
-
 import { today, fIsAfter } from 'src/utils/format-time';
-
-import { getAllCustomers } from 'src/hooks/use-customer';
 
 import { Form, schemaHelper } from 'src/components/hook-form';
 
@@ -58,8 +53,6 @@ export const NewInvoiceSchema = zod
 // ----------------------------------------------------------------------
 
 export function InvoiceNewEditForm({ currentInvoice, onSubmit, isSubmitting }) {
-  const router = useRouter();
-
   const loadingSave = useBoolean();
   const loadingSend = useBoolean();
 
@@ -86,7 +79,6 @@ export function InvoiceNewEditForm({ currentInvoice, onSubmit, isSubmitting }) {
   });
 
   const {
-    reset,
     handleSubmit,
     formState: { isSubmitting: formIsSubmitting },
   } = methods;

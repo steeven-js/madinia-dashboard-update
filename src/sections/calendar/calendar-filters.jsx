@@ -172,13 +172,31 @@ export function CalendarFilters({
                     ? fDate(event.start)
                     : `${fDateTime(event.start)} - ${fDateTime(event.end)}`
                 }
-                secondary={event.title}
+                secondary={
+                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                    {event.photoURL && (
+                      <Box
+                        component="img"
+                        src={event.photoURL}
+                        alt={event.userDisplayName || ''}
+                        sx={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: '50%',
+                          mr: 1,
+                          objectFit: 'cover',
+                          border: (theme) => `solid 1px ${theme.palette.divider}`,
+                        }}
+                      />
+                    )}
+                    <Typography variant="subtitle2" sx={{ color: 'text.primary' }}>
+                      {event.title}
+                    </Typography>
+                  </Box>
+                }
                 slotProps={{
                   primary: {
                     sx: { typography: 'caption', color: 'text.disabled' },
-                  },
-                  secondary: {
-                    sx: { mt: 0.5, color: 'text.primary', typography: 'subtitle2' },
                   },
                 }}
               />

@@ -90,7 +90,10 @@ export function useCalendar() {
       }
 
       onOpenForm();
-      setSelectedRange({ start: arg.startStr, end: arg.endStr });
+      // Store dates as fixed timestamps
+      const start = new Date(arg.startStr).getTime();
+      const end = new Date(arg.endStr).getTime();
+      setSelectedRange({ start, end });
     },
     [calendarEl, onOpenForm]
   );
@@ -105,26 +108,24 @@ export function useCalendar() {
     [onOpenForm]
   );
 
-  const onResizeEvent = useCallback((arg, updateEvent) => {
-    const { event } = arg;
-
-    updateEvent({
-      id: event.id,
-      allDay: event.allDay,
-      start: event.startStr,
-      end: event.endStr,
-    });
+  const onResizeEvent = useCallback(async (arg, updateEvent) => {
+    try {
+      await updateEvent();
+      return Promise.resolve();
+    } catch (error) {
+      console.error("Error in onResizeEvent:", error);
+      return Promise.reject(error);
+    }
   }, []);
 
-  const onDropEvent = useCallback((arg, updateEvent) => {
-    const { event } = arg;
-
-    updateEvent({
-      id: event.id,
-      allDay: event.allDay,
-      start: event.startStr,
-      end: event.endStr,
-    });
+  const onDropEvent = useCallback(async (arg, updateEvent) => {
+    try {
+      await updateEvent();
+      return Promise.resolve();
+    } catch (error) {
+      console.error("Error in onDropEvent:", error);
+      return Promise.reject(error);
+    }
   }, []);
 
   const onClickEventInFilters = useCallback(
