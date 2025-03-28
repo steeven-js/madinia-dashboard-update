@@ -89,36 +89,16 @@ const ItemBase = forwardRef((props, ref) => {
     const firstAttachment = task.attachments[0];
     const isImage = firstAttachment.type && firstAttachment.type.startsWith('image/');
 
+    if (!isImage) return null;
+
     return (
       <Box sx={[(theme) => ({ p: theme.spacing(1, 1, 0, 1) })]}>
-        {isImage ? (
-          <ItemImage
-            open={open}
-            className={imageClasses.root}
-            alt={firstAttachment.name || 'attachment'}
-            src={firstAttachment.url || firstAttachment.preview || firstAttachment}
-          />
-        ) : (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '180px',
-              bgcolor: 'background.neutral',
-              borderRadius: 1.5,
-            }}
-          >
-            <Box
-              component="img"
-              src={getFileIcon(firstAttachment.type || '')}
-              sx={{
-                width: 80,
-                height: 80,
-              }}
-            />
-          </Box>
-        )}
+        <ItemImage
+          open={open}
+          className={imageClasses.root}
+          alt={firstAttachment.name || 'attachment'}
+          src={firstAttachment.url || firstAttachment.preview || firstAttachment}
+        />
       </Box>
     );
   };
