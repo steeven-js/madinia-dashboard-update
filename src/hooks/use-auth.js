@@ -281,9 +281,16 @@ export function useUpdateFirebasePassword() {
  * @returns {boolean}
  */
 const hasRolePermission = (role, permission) => {
+  // Si pas de rôle défini ou rôle non configuré, refuser l'accès
+  if (!role || !CONFIG.roles[role]) return false;
+
   const roleConfig = CONFIG.roles[role];
-  if (!roleConfig) return false;
-  return roleConfig.permissions.includes('all') || roleConfig.permissions.includes(permission);
+
+  // Si le rôle a la permission spéciale 'all', autoriser tout accès
+  if (roleConfig.permissions.includes('all')) return true;
+
+  // Vérifier si la permission spécifique est accordée
+  return roleConfig.permissions.includes(permission);
 };
 
 /**
@@ -293,7 +300,11 @@ const hasRolePermission = (role, permission) => {
  * @returns {boolean}
  */
 const hasRoleLevel = (role, requiredLevel) => {
+  // Si pas de rôle défini ou rôle non configuré, refuser l'accès
+  if (!role || !CONFIG.roles[role]) return false;
+
   const roleConfig = CONFIG.roles[role];
-  if (!roleConfig) return false;
+
+  // Vérifier si le niveau du rôle est >= au niveau requis
   return roleConfig.level >= requiredLevel;
 };

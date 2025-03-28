@@ -84,6 +84,8 @@ const CustomerCardsPage = lazy(() => import('src/pages/dashboard/customer/cards'
 const CustomerListPage = lazy(() => import('src/pages/dashboard/customer/list'));
 const CustomerCreatePage = lazy(() => import('src/pages/dashboard/customer/new'));
 const CustomerEditPage = lazy(() => import('src/pages/dashboard/customer/edit'));
+// System Settings
+const SystemSettingsPage = lazy(() => import('src/pages/dashboard/system-settings'));
 
 // ----------------------------------------------------------------------
 
@@ -219,6 +221,7 @@ export const dashboardRoutes = [
       { path: 'permission', element: <PermissionDeniedPage /> },
       { path: 'params', element: <ParamsPage /> },
       { path: 'blank', element: <BlankPage /> },
+      { path: 'system-settings', element: <SystemSettingsPage /> },
     ],
   },
 ];
