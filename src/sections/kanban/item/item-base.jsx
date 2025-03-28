@@ -45,7 +45,7 @@ const ItemBase = forwardRef((props, ref) => {
         position: 'absolute',
         ...(task.priority === 'low' && { color: 'info.main' }),
         ...(task.priority === 'medium' && { color: 'warning.main' }),
-        ...(task.priority === 'hight' && { color: 'error.main' }),
+        ...(task.priority === 'high' && { color: 'error.main' }),
       }}
     />
   );

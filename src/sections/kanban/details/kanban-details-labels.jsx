@@ -28,7 +28,7 @@ const LABEL_COLORS = {
 // Get color for a label, with fallback to default
 const getLabelColor = (label) => LABEL_COLORS[label.toLowerCase()] || 'default';
 
-export function KanbanDetailsLabels({ taskLabels, onUpdateLabels }) {
+export function KanbanDetailsLabels({ taskLabels = [], onUpdateLabels }) {
   const { labels, loading } = useKanbanLabels();
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -172,8 +172,4 @@ export function KanbanDetailsLabels({ taskLabels, onUpdateLabels }) {
 KanbanDetailsLabels.propTypes = {
   taskLabels: PropTypes.arrayOf(PropTypes.string),
   onUpdateLabels: PropTypes.func,
-};
-
-KanbanDetailsLabels.defaultProps = {
-  taskLabels: [],
 };

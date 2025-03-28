@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { varAlpha } from 'minimal-shared/utils';
 import { useTabs, useBoolean } from 'minimal-shared/hooks';
 
@@ -23,6 +23,7 @@ import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { CustomTabs } from 'src/components/custom-tabs';
 import { useDateRangePicker, CustomDateRangePicker } from 'src/components/custom-date-range-picker';
+import { useGetBoard } from 'src/actions/kanban';
 
 import { KanbanDetailsToolbar } from './kanban-details-toolbar';
 import { KanbanInputName } from '../components/kanban-input-name';
@@ -55,6 +56,10 @@ const BlockLabel = styled('span')(({ theme }) => ({
 
 export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose }) {
   const tabs = useTabs('overview');
+  const { board } = useGetBoard();
+
+  const boardRef = useRef(board);
+  const taskRef = useRef(task);
 
   const likeToggle = useBoolean();
   const contactsDialog = useBoolean();
@@ -67,6 +72,47 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
   const [labels, setLabels] = useState(task.labels || []);
 
   const rangePicker = useDateRangePicker(dayjs(task.due[0]), dayjs(task.due[1]));
+
+  useEffect(() => {
+    boardRef.current = board;
+    taskRef.current = task;
+  }, [board, task]);
+
+  useEffect(() => {
+    if (!board.tasks) return;
+
+    const columnId = Object.keys(board.tasks).find((colId) =>
+      board.tasks[colId].some((t) => t.id === task.id)
+    );
+
+    if (!columnId) return;
+
+    const updatedTask = board.tasks[columnId].find((t) => t.id === task.id);
+
+    if (!updatedTask) return;
+
+    if (updatedTask.priority !== priority) {
+      setPriority(updatedTask.priority);
+    }
+
+    if (updatedTask.name !== taskName) {
+      setTaskName(updatedTask.name);
+    }
+
+    if (updatedTask.description !== taskDescription) {
+      setTaskDescription(updatedTask.description);
+    }
+
+    const updatedAssignees = updatedTask.assignee || [];
+    if (JSON.stringify(updatedAssignees) !== JSON.stringify(assignees)) {
+      setAssignees(updatedAssignees);
+    }
+
+    const updatedLabels = updatedTask.labels || [];
+    if (JSON.stringify(updatedLabels) !== JSON.stringify(labels)) {
+      setLabels(updatedLabels);
+    }
+  }, [board]);
 
   const handleChangeTaskName = useCallback((event) => {
     setTaskName(event.target.value);
@@ -87,13 +133,25 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
     [onUpdateTask, task, taskName]
   );
 
-  const handleChangeTaskDescription = useCallback((event) => {
-    setTaskDescription(event.target.value);
-  }, []);
+  const handleChangeTaskDescription = useCallback(
+    (event) => {
+      const newDescription = event.target.value;
+      setTaskDescription(newDescription);
 
-  const handleChangePriority = useCallback((newValue) => {
-    setPriority(newValue);
-  }, []);
+      // Mettre à jour immédiatement la tâche avec la nouvelle description
+      onUpdateTask({ ...task, description: newDescription });
+    },
+    [onUpdateTask, task]
+  );
+
+  const handleChangePriority = useCallback(
+    (newValue) => {
+      setPriority(newValue);
+
+      onUpdateTask({ ...task, priority: newValue });
+    },
+    [onUpdateTask, task]
+  );
 
   const handleChangeAssignees = useCallback(
     (newAssignees) => {
