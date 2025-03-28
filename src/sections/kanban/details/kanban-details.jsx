@@ -36,13 +36,14 @@ import { KanbanDetailsLabels } from './kanban-details-labels';
 
 // ----------------------------------------------------------------------
 
-const SUBTASKS = [
-  'Complete project proposal',
-  'Conduct market research',
-  'Design user interface mockups',
-  'Develop backend api',
-  'Implement authentication system',
-];
+// Removing the hardcoded SUBTASKS array as we'll use data from Firebase
+// const SUBTASKS = [
+//   'Complete project proposal',
+//   'Conduct market research',
+//   'Design user interface mockups',
+//   'Develop backend api',
+//   'Implement authentication system',
+// ];
 
 const BlockLabel = styled('span')(({ theme }) => ({
   ...theme.typography.caption,
@@ -67,9 +68,14 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
   const [taskName, setTaskName] = useState(task.name);
   const [priority, setPriority] = useState(task.priority);
   const [taskDescription, setTaskDescription] = useState(task.description);
-  const [subtaskCompleted, setSubtaskCompleted] = useState(SUBTASKS.slice(0, 2));
+  const [subtasks, setSubtasks] = useState(task.subtasks || []);
+  const [subtaskCompleted, setSubtaskCompleted] = useState(
+    (task.subtasks || []).filter((subtask) => subtask.completed).map((subtask) => subtask.id)
+  );
   const [assignees, setAssignees] = useState(task.assignee || []);
   const [labels, setLabels] = useState(task.labels || []);
+  const [newSubtaskName, setNewSubtaskName] = useState('');
+  const [showSubtaskInput, setShowSubtaskInput] = useState(false);
 
   const rangePicker = useDateRangePicker(dayjs(task.due[0]), dayjs(task.due[1]));
 
@@ -111,6 +117,14 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
     const updatedLabels = updatedTask.labels || [];
     if (JSON.stringify(updatedLabels) !== JSON.stringify(labels)) {
       setLabels(updatedLabels);
+    }
+
+    const updatedSubtasks = updatedTask.subtasks || [];
+    if (JSON.stringify(updatedSubtasks) !== JSON.stringify(subtasks)) {
+      setSubtasks(updatedSubtasks);
+      setSubtaskCompleted(
+        updatedSubtasks.filter((subtask) => subtask.completed).map((subtask) => subtask.id)
+      );
     }
   }, [board]);
 
@@ -169,12 +183,80 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
     [onUpdateTask, task]
   );
 
-  const handleClickSubtaskComplete = (taskId) => {
-    const selected = subtaskCompleted.includes(taskId)
-      ? subtaskCompleted.filter((value) => value !== taskId)
-      : [...subtaskCompleted, taskId];
+  const handleClickSubtaskComplete = (subtaskId) => {
+    // Find the subtask by id
+    const subtaskIndex = subtasks.findIndex((subtask) => subtask.id === subtaskId);
+    if (subtaskIndex === -1) return;
 
-    setSubtaskCompleted(selected);
+    // Create a copy of the subtasks array
+    const updatedSubtasks = [...subtasks];
+
+    // Toggle the completed status
+    updatedSubtasks[subtaskIndex] = {
+      ...updatedSubtasks[subtaskIndex],
+      completed: !updatedSubtasks[subtaskIndex].completed,
+      updatedAt: new Date().toISOString(),
+      updatedBy: task.updatedBy || task.createdBy,
+    };
+
+    // Update local state
+    setSubtasks(updatedSubtasks);
+    setSubtaskCompleted(
+      updatedSubtasks.filter((subtask) => subtask.completed).map((subtask) => subtask.id)
+    );
+
+    // Update the task with the new subtasks
+    onUpdateTask({ ...task, subtasks: updatedSubtasks });
+  };
+
+  const handleAddSubtask = () => {
+    if (!newSubtaskName.trim()) return;
+
+    // Create a new subtask object
+    const newSubtask = {
+      id: `subtask-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: newSubtaskName.trim(),
+      completed: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      createdBy: task.updatedBy || task.createdBy,
+      updatedBy: task.updatedBy || task.createdBy,
+      userId: task.updatedBy || task.createdBy,
+    };
+
+    // Add the new subtask to the existing subtasks
+    const updatedSubtasks = [...subtasks, newSubtask];
+
+    // Update local state
+    setSubtasks(updatedSubtasks);
+    setNewSubtaskName('');
+    setShowSubtaskInput(false);
+
+    // Update the task with the new subtasks
+    onUpdateTask({ ...task, subtasks: updatedSubtasks });
+  };
+
+  const handleDeleteSubtask = (subtaskId) => {
+    // Filter out the subtask to be deleted
+    const updatedSubtasks = subtasks.filter((subtask) => subtask.id !== subtaskId);
+
+    // Update local state
+    setSubtasks(updatedSubtasks);
+    setSubtaskCompleted(
+      updatedSubtasks.filter((subtask) => subtask.completed).map((subtask) => subtask.id)
+    );
+
+    // Update the task with the new subtasks
+    onUpdateTask({ ...task, subtasks: updatedSubtasks });
+  };
+
+  const handleSubtaskKeyDown = (event) => {
+    if (event.key === 'Enter') {
+      handleAddSubtask();
+    } else if (event.key === 'Escape') {
+      setNewSubtaskName('');
+      setShowSubtaskInput(false);
+    }
   };
 
   const renderToolbar = () => (
@@ -332,39 +414,66 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
     <Box sx={{ gap: 3, display: 'flex', flexDirection: 'column' }}>
       <div>
         <Typography variant="body2" sx={{ mb: 1 }}>
-          {subtaskCompleted.length} of {SUBTASKS.length}
+          {subtaskCompleted.length} of {subtasks.length}
         </Typography>
 
         <LinearProgress
           variant="determinate"
-          value={(subtaskCompleted.length / SUBTASKS.length) * 100}
+          value={(subtaskCompleted.length / subtasks.length) * 100}
         />
       </div>
 
       <FormGroup>
-        {SUBTASKS.map((taskItem) => (
-          <FormControlLabel
-            key={taskItem}
-            control={
-              <Checkbox
-                disableRipple
-                name={taskItem}
-                checked={subtaskCompleted.includes(taskItem)}
-              />
-            }
-            label={taskItem}
-            onChange={() => handleClickSubtaskComplete(taskItem)}
-          />
+        {subtasks.map((subtask) => (
+          <Box key={subtask.id} sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+            <FormControlLabel
+              control={<Checkbox disableRipple name={subtask.name} checked={subtask.completed} />}
+              label={subtask.name}
+              onChange={() => handleClickSubtaskComplete(subtask.id)}
+              sx={{ flexGrow: 1 }}
+            />
+            <Tooltip title="Delete subtask">
+              <IconButton
+                size="small"
+                color="error"
+                onClick={() => handleDeleteSubtask(subtask.id)}
+                sx={{ opacity: 0.72, '&:hover': { opacity: 1 } }}
+              >
+                <Iconify icon="eva:trash-2-outline" />
+              </IconButton>
+            </Tooltip>
+          </Box>
         ))}
       </FormGroup>
 
-      <Button
-        variant="outlined"
-        startIcon={<Iconify icon="mingcute:add-line" />}
-        sx={{ alignSelf: 'flex-start' }}
-      >
-        Subtask
-      </Button>
+      {showSubtaskInput ? (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <TextField
+            fullWidth
+            size="small"
+            value={newSubtaskName}
+            onChange={(e) => setNewSubtaskName(e.target.value)}
+            onKeyDown={handleSubtaskKeyDown}
+            placeholder="Enter subtask name"
+            autoFocus
+          />
+          <Button variant="contained" onClick={handleAddSubtask} disabled={!newSubtaskName.trim()}>
+            Add
+          </Button>
+          <IconButton onClick={() => setShowSubtaskInput(false)}>
+            <Iconify icon="eva:close-fill" />
+          </IconButton>
+        </Box>
+      ) : (
+        <Button
+          variant="outlined"
+          startIcon={<Iconify icon="mingcute:add-line" />}
+          sx={{ alignSelf: 'flex-start' }}
+          onClick={() => setShowSubtaskInput(true)}
+        >
+          Subtask
+        </Button>
+      )}
     </Box>
   );
 
