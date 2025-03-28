@@ -16,7 +16,17 @@ import { usePathname } from '../hooks';
 
 // Overview
 const IndexPage = lazy(() => import('src/pages/dashboard'));
+const OverviewEcommercePage = lazy(() => import('src/pages/dashboard/ecommerce'));
 const OverviewAnalyticsPage = lazy(() => import('src/pages/dashboard/analytics'));
+const OverviewBankingPage = lazy(() => import('src/pages/dashboard/banking'));
+const OverviewBookingPage = lazy(() => import('src/pages/dashboard/booking'));
+const OverviewFilePage = lazy(() => import('src/pages/dashboard/file'));
+const OverviewCoursePage = lazy(() => import('src/pages/dashboard/course'));
+// Product
+const ProductDetailsPage = lazy(() => import('src/pages/dashboard/product/details'));
+const ProductListPage = lazy(() => import('src/pages/dashboard/product/list'));
+const ProductCreatePage = lazy(() => import('src/pages/dashboard/product/new'));
+const ProductEditPage = lazy(() => import('src/pages/dashboard/product/edit'));
 // Order
 const OrderListPage = lazy(() => import('src/pages/dashboard/order/list'));
 const OrderDetailsPage = lazy(() => import('src/pages/dashboard/order/details'));
@@ -46,8 +56,18 @@ const BlogPostsPage = lazy(() => import('src/pages/dashboard/post/list'));
 const BlogPostPage = lazy(() => import('src/pages/dashboard/post/details'));
 const BlogNewPostPage = lazy(() => import('src/pages/dashboard/post/new'));
 const BlogEditPostPage = lazy(() => import('src/pages/dashboard/post/edit'));
+// Job
+const JobDetailsPage = lazy(() => import('src/pages/dashboard/job/details'));
+const JobListPage = lazy(() => import('src/pages/dashboard/job/list'));
+const JobCreatePage = lazy(() => import('src/pages/dashboard/job/new'));
+const JobEditPage = lazy(() => import('src/pages/dashboard/job/edit'));
+// Tour
+const TourDetailsPage = lazy(() => import('src/pages/dashboard/tour/details'));
+const TourListPage = lazy(() => import('src/pages/dashboard/tour/list'));
+const TourCreatePage = lazy(() => import('src/pages/dashboard/tour/new'));
+const TourEditPage = lazy(() => import('src/pages/dashboard/tour/edit'));
 // File manager
-// const FileManagerPage = lazy(() => import('src/pages/dashboard/file-manager'));
+const FileManagerPage = lazy(() => import('src/pages/dashboard/file-manager'));
 // App
 const ChatPage = lazy(() => import('src/pages/dashboard/chat'));
 const MailPage = lazy(() => import('src/pages/dashboard/mail'));
@@ -98,6 +118,11 @@ export const dashboardRoutes = [
     children: [
       { index: true, element: <IndexPage /> },
       { path: 'analytics', element: <OverviewAnalyticsPage /> },
+      { path: 'ecommerce', element: <OverviewEcommercePage /> },
+      { path: 'banking', element: <OverviewBankingPage /> },
+      { path: 'booking', element: <OverviewBookingPage /> },
+      { path: 'file', element: <OverviewFilePage /> },
+      { path: 'course', element: <OverviewCoursePage /> },
       {
         path: 'user',
         children: [
@@ -132,6 +157,16 @@ export const dashboardRoutes = [
         ],
       },
       {
+        path: 'product',
+        children: [
+          { index: true, element: <ProductListPage /> },
+          { path: 'list', element: <ProductListPage /> },
+          { path: ':id', element: <ProductDetailsPage /> },
+          { path: 'new', element: <ProductCreatePage /> },
+          { path: ':id/edit', element: <ProductEditPage /> },
+        ],
+      },
+      {
         path: 'order',
         children: [
           { index: true, element: <OrderListPage /> },
@@ -159,10 +194,34 @@ export const dashboardRoutes = [
           { path: 'new', element: <BlogNewPostPage /> },
         ],
       },
-      // { path: 'file-manager', element: <FileManagerPage /> },
+      {
+        path: 'job',
+        children: [
+          { index: true, element: <JobListPage /> },
+          { path: 'list', element: <JobListPage /> },
+          { path: ':id', element: <JobDetailsPage /> },
+          { path: 'new', element: <JobCreatePage /> },
+          { path: ':id/edit', element: <JobEditPage /> },
+        ],
+      },
+      {
+        path: 'tour',
+        children: [
+          { index: true, element: <TourListPage /> },
+          { path: 'list', element: <TourListPage /> },
+          { path: ':id', element: <TourDetailsPage /> },
+          { path: 'new', element: <TourCreatePage /> },
+          { path: ':id/edit', element: <TourEditPage /> },
+        ],
+      },
+      { path: 'file-manager', element: <FileManagerPage /> },
+      { path: 'mail', element: <MailPage /> },
+      { path: 'chat', element: <ChatPage /> },
       { path: 'calendar', element: <CalendarPage /> },
       { path: 'kanban', element: <KanbanPage /> },
       { path: 'kanban-settings', element: <KanbanSettingsPage /> },
+      { path: 'permission', element: <PermissionDeniedPage /> },
+      { path: 'params', element: <ParamsPage /> },
       { path: 'blank', element: <BlankPage /> },
       { path: 'system-settings', element: <SystemSettingsPage /> },
     ],
