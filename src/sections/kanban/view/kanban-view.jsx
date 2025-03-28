@@ -22,12 +22,17 @@ import {
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
+import Tooltip from '@mui/material/Tooltip';
+import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import FormControlLabel from '@mui/material/FormControlLabel';
 
+import { paths } from 'src/routes/paths';
+import { RouterLink } from 'src/routes/components';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { moveTask, moveColumn, useGetBoard } from 'src/actions/kanban';
 
+import { Iconify } from 'src/components/iconify';
 import { EmptyContent } from 'src/components/empty-content';
 
 import { kanbanClasses } from '../classes';
@@ -372,19 +377,27 @@ export function KanbanView() {
       >
         <Typography variant="h4">Kanban</Typography>
 
-        <FormControlLabel
-          label="Fixed column"
-          labelPlacement="start"
-          control={
-            <Switch
-              checked={columnFixed}
-              onChange={(event) => {
-                setColumnFixed(event.target.checked);
-              }}
-              inputProps={{ id: 'fixed-column-switch' }}
-            />
-          }
-        />
+        <Stack direction="row" spacing={1} alignItems="center">
+          <FormControlLabel
+            label="Fixed column"
+            labelPlacement="start"
+            control={
+              <Switch
+                checked={columnFixed}
+                onChange={(event) => {
+                  setColumnFixed(event.target.checked);
+                }}
+                inputProps={{ id: 'fixed-column-switch' }}
+              />
+            }
+          />
+
+          <Tooltip title="Paramètres des étiquettes">
+            <IconButton component={RouterLink} to={paths.dashboard.kanbanSettings}>
+              <Iconify icon="eva:settings-2-outline" />
+            </IconButton>
+          </Tooltip>
+        </Stack>
       </Box>
 
       {boardLoading ? renderLoading() : <>{boardEmpty ? renderEmpty() : renderList()}</>}

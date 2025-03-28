@@ -31,6 +31,7 @@ import { KanbanDetailsAttachments } from './kanban-details-attachments';
 import { KanbanDetailsCommentList } from './kanban-details-comment-list';
 import { KanbanDetailsCommentInput } from './kanban-details-comment-input';
 import { KanbanContactsDialog } from '../components/kanban-contacts-dialog';
+import { KanbanDetailsLabels } from './kanban-details-labels';
 
 // ----------------------------------------------------------------------
 
@@ -63,6 +64,7 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
   const [taskDescription, setTaskDescription] = useState(task.description);
   const [subtaskCompleted, setSubtaskCompleted] = useState(SUBTASKS.slice(0, 2));
   const [assignees, setAssignees] = useState(task.assignee || []);
+  const [labels, setLabels] = useState(task.labels || []);
 
   const rangePicker = useDateRangePicker(dayjs(task.due[0]), dayjs(task.due[1]));
 
@@ -97,6 +99,14 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
     (newAssignees) => {
       setAssignees(newAssignees);
       onUpdateTask({ ...task, assignee: newAssignees });
+    },
+    [onUpdateTask, task]
+  );
+
+  const handleChangeLabels = useCallback(
+    (newLabels) => {
+      setLabels(newLabels);
+      onUpdateTask({ ...task, labels: newLabels });
     },
     [onUpdateTask, task]
   );
@@ -187,16 +197,9 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
       </Box>
 
       {/* Label */}
-      <Box sx={{ display: 'flex' }}>
-        <BlockLabel sx={{ height: 24, lineHeight: '24px' }}>Labels</BlockLabel>
-
-        {!!task.labels.length && (
-          <Box sx={{ gap: 1, display: 'flex', flexWrap: 'wrap' }}>
-            {task.labels.map((label) => (
-              <Chip key={label} color="info" label={label} size="small" variant="soft" />
-            ))}
-          </Box>
-        )}
+      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <BlockLabel>Labels</BlockLabel>
+        <KanbanDetailsLabels taskLabels={labels} onUpdateLabels={handleChangeLabels} />
       </Box>
 
       {/* Due date */}

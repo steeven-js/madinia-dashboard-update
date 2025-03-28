@@ -586,7 +586,7 @@ export async function deleteSubtask(columnId, taskId, subtaskId) {
 
 export async function getAvailableLabels() {
   try {
-    const labelsRef = doc(db, 'settings', 'Étiquettes');
+    const labelsRef = doc(db, 'settings', 'etiquettes');
     const labelsSnapshot = await getDoc(labelsRef);
 
     if (!labelsSnapshot.exists()) {
@@ -607,7 +607,7 @@ export async function getAvailableLabels() {
 
 export async function addAvailableLabel(labelName) {
   try {
-    const labelsRef = doc(db, 'settings', 'Étiquettes');
+    const labelsRef = doc(db, 'settings', 'etiquettes');
     const labelsSnapshot = await getDoc(labelsRef);
 
     let currentLabels = [];
@@ -638,7 +638,7 @@ export async function addAvailableLabel(labelName) {
 
 export async function deleteAvailableLabel(labelName) {
   try {
-    const labelsRef = doc(db, 'settings', 'Étiquettes');
+    const labelsRef = doc(db, 'settings', 'etiquettes');
     const labelsSnapshot = await getDoc(labelsRef);
 
     if (!labelsSnapshot.exists()) {
