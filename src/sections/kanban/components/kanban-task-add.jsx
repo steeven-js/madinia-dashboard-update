@@ -7,6 +7,7 @@ import ClickAwayListener from '@mui/material/ClickAwayListener';
 import InputBase, { inputBaseClasses } from '@mui/material/InputBase';
 
 import { fAdd, today } from 'src/utils/format-time';
+import { useAuth } from 'src/hooks/use-auth';
 
 import { _mock } from 'src/_mock';
 
@@ -14,6 +15,7 @@ import { _mock } from 'src/_mock';
 
 export function KanbanTaskAdd({ status, openAddTask, onAddTask, onCloseAddTask }) {
   const [taskName, setTaskName] = useState('');
+  const { userProfile } = useAuth();
 
   const defaultTask = useMemo(
     () => ({
@@ -26,9 +28,20 @@ export function KanbanTaskAdd({ status, openAddTask, onAddTask, onCloseAddTask }
       comments: [],
       assignee: [],
       due: [today(), fAdd({ days: 1 })],
-      reporter: { id: _mock.id(16), name: _mock.fullName(16), avatarUrl: _mock.image.avatar(16) },
+      reporter: {
+        id: userProfile?.id || null,
+        name:
+          userProfile?.displayName ||
+          userProfile?.firstName + ' ' + userProfile?.lastName ||
+          'Anonymous',
+        avatarUrl: userProfile?.avatarUrl || null,
+        email: userProfile?.email || null,
+        role: userProfile?.role || null,
+        roleLevel: userProfile?.roleLevel || 0,
+        isVerified: userProfile?.isVerified || false,
+      },
     }),
-    [status, taskName]
+    [status, taskName, userProfile]
   );
 
   const handleChangeName = useCallback((event) => {

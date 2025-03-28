@@ -96,7 +96,7 @@ const ItemBase = forwardRef((props, ref) => {
             open={open}
             className={imageClasses.root}
             alt={firstAttachment.name || 'attachment'}
-            src={firstAttachment.url}
+            src={firstAttachment.url || firstAttachment.preview || firstAttachment}
           />
         ) : (
           <Box

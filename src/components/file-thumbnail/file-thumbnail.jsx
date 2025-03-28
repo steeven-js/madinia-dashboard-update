@@ -16,9 +16,27 @@ export const FileThumbnail = forwardRef((props, ref) => {
 
   const { icon, removeBtn, downloadBtn, tooltip: tooltipProps } = slotProps ?? {};
 
-  const { name, path } = fileData(file);
+  const { name, path, preview } = fileData(file);
 
-  const previewUrl = typeof file === 'string' ? file : URL.createObjectURL(file);
+  // Gérer correctement les différents types d'entrée pour prévisualisation
+  let previewUrl;
+
+  if (typeof file === 'string') {
+    // Si c'est une chaîne, on l'utilise directement (peut être une URL Firebase)
+    previewUrl = file;
+  } else if (file?.url) {
+    // Si c'est un objet avec une propriété url (comme dans le cas des attachements Firebase)
+    previewUrl = file.url;
+  } else if (file?.preview) {
+    // Si l'objet a une propriété preview
+    previewUrl = file.preview;
+  } else if (file instanceof File || file instanceof Blob) {
+    // Si c'est un objet File ou Blob, on utilise createObjectURL
+    previewUrl = URL.createObjectURL(file);
+  } else {
+    // Fallback sur le path ou une chaîne vide
+    previewUrl = path || '';
+  }
 
   const format = fileFormat(path ?? previewUrl);
 

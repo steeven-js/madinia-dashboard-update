@@ -4,6 +4,7 @@ import { useBoolean } from 'minimal-shared/hooks';
 import { useSortable, defaultAnimateLayoutChanges } from '@dnd-kit/sortable';
 
 import { createTask, clearColumn, deleteColumn, updateColumn } from 'src/actions/kanban';
+import { useAuth } from 'src/hooks/use-auth';
 
 import { toast } from 'src/components/snackbar';
 
@@ -17,6 +18,7 @@ const animateLayoutChanges = (args) => defaultAnimateLayoutChanges({ ...args, wa
 
 export function KanbanColumn({ children, column, tasks, disabled, sx }) {
   const openAddTask = useBoolean();
+  const { userProfile } = useAuth();
 
   const { attributes, isDragging, listeners, setNodeRef, transition, active, over, transform } =
     useSortable({
@@ -68,14 +70,14 @@ export function KanbanColumn({ children, column, tasks, disabled, sx }) {
   const handleAddTask = useCallback(
     async (taskData) => {
       try {
-        createTask(column.id, taskData);
+        createTask(column.id, taskData, userProfile?.id);
 
         openAddTask.onFalse();
       } catch (error) {
         console.error(error);
       }
     },
-    [column.id, openAddTask]
+    [column.id, openAddTask, userProfile?.id]
   );
 
   return (
