@@ -50,17 +50,78 @@ const ItemBase = forwardRef((props, ref) => {
     />
   );
 
-  const renderImage = () =>
-    !!task?.attachments?.length && (
+  // Fonction pour obtenir l'icône appropriée en fonction du type de fichier
+  const getFileIcon = (fileType) => {
+    if (fileType.startsWith('application/pdf')) {
+      return '/assets/icons/files/ic_pdf.svg';
+    }
+    if (fileType.includes('word') || fileType.includes('docx')) {
+      return '/assets/icons/files/ic_word.svg';
+    }
+    if (
+      fileType.includes('excel') ||
+      fileType.includes('spreadsheet') ||
+      fileType.includes('xlsx')
+    ) {
+      return '/assets/icons/files/ic_excel.svg';
+    }
+    if (
+      fileType.includes('powerpoint') ||
+      fileType.includes('presentation') ||
+      fileType.includes('pptx')
+    ) {
+      return '/assets/icons/files/ic_ppt.svg';
+    }
+    if (
+      fileType.includes('zip') ||
+      fileType.includes('compressed') ||
+      fileType.includes('archive')
+    ) {
+      return '/assets/icons/files/ic_zip.svg';
+    }
+    // Icône par défaut pour les autres types de fichiers
+    return '/assets/icons/files/ic_file.svg';
+  };
+
+  const renderImage = () => {
+    if (!task?.attachments?.length) return null;
+
+    const firstAttachment = task.attachments[0];
+    const isImage = firstAttachment.type && firstAttachment.type.startsWith('image/');
+
+    return (
       <Box sx={[(theme) => ({ p: theme.spacing(1, 1, 0, 1) })]}>
-        <ItemImage
-          open={open}
-          className={imageClasses.root}
-          alt={task?.attachments?.[0]}
-          src={task?.attachments?.[0]}
-        />
+        {isImage ? (
+          <ItemImage
+            open={open}
+            className={imageClasses.root}
+            alt={firstAttachment.name || 'attachment'}
+            src={firstAttachment.url}
+          />
+        ) : (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '180px',
+              bgcolor: 'background.neutral',
+              borderRadius: 1.5,
+            }}
+          >
+            <Box
+              component="img"
+              src={getFileIcon(firstAttachment.type || '')}
+              sx={{
+                width: 80,
+                height: 80,
+              }}
+            />
+          </Box>
+        )}
       </Box>
     );
+  };
 
   const renderInfo = () => (
     <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>

@@ -56,6 +56,8 @@ const cssVars = {
 export function KanbanView() {
   const { board, boardLoading, boardEmpty } = useGetBoard();
 
+  console.log('board', board);
+
   const recentlyMovedToNewContainer = useRef(false);
   const lastOverId = useRef(null);
 
