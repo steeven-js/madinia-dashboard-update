@@ -1,8 +1,9 @@
 import { Container } from '@mui/system';
 import { Grid, Typography } from '@mui/material';
 
-import { KanbanLabelsSettings } from './kanban-labels-settings';
 import { DashboardContent } from 'src/layouts/dashboard';
+
+import { KanbanLabelsSettings } from './kanban-labels-settings';
 
 // ----------------------------------------------------------------------
 

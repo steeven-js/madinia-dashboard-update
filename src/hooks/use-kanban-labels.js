@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getAvailableLabels, addAvailableLabel, deleteAvailableLabel } from 'src/actions/kanban';
+
+import { addAvailableLabel, getAvailableLabels, deleteAvailableLabel } from 'src/actions/kanban';
 
 import { toast } from 'src/components/snackbar';
 

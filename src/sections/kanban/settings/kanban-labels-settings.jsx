@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
-import { useKanbanLabels } from 'src/hooks/use-kanban-labels';
 
 import Card from '@mui/material/Card';
+import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
@@ -13,12 +13,11 @@ import Typography from '@mui/material/Typography';
 import CardContent from '@mui/material/CardContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogActions from '@mui/material/DialogActions';
-import CircularProgress from '@mui/material/CircularProgress';
 import DialogContent from '@mui/material/DialogContent';
 import InputAdornment from '@mui/material/InputAdornment';
+import CircularProgress from '@mui/material/CircularProgress';
 
-import Chip from '@mui/material/Chip';
-import IconButton from '@mui/material/IconButton';
+import { useKanbanLabels } from 'src/hooks/use-kanban-labels';
 
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';

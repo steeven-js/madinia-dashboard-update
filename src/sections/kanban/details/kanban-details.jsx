@@ -1,11 +1,10 @@
 import dayjs from 'dayjs';
-import { useState, useCallback, useEffect, useRef } from 'react';
 import { varAlpha } from 'minimal-shared/utils';
 import { useTabs, useBoolean } from 'minimal-shared/hooks';
+import { useRef, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
-import Chip from '@mui/material/Chip';
 import Drawer from '@mui/material/Drawer';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
@@ -24,6 +23,7 @@ import { Scrollbar } from 'src/components/scrollbar';
 import { CustomTabs } from 'src/components/custom-tabs';
 import { useDateRangePicker, CustomDateRangePicker } from 'src/components/custom-date-range-picker';
 
+import { KanbanDetailsLabels } from './kanban-details-labels';
 import { KanbanDetailsToolbar } from './kanban-details-toolbar';
 import { KanbanInputName } from '../components/kanban-input-name';
 import { KanbanDetailsPriority } from './kanban-details-priority';
@@ -31,7 +31,6 @@ import { KanbanDetailsAttachments } from './kanban-details-attachments';
 import { KanbanDetailsCommentList } from './kanban-details-comment-list';
 import { KanbanDetailsCommentInput } from './kanban-details-comment-input';
 import { KanbanContactsDialog } from '../components/kanban-contacts-dialog';
-import { KanbanDetailsLabels } from './kanban-details-labels';
 
 // ----------------------------------------------------------------------
 
@@ -117,7 +116,7 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
     if (JSON.stringify(updatedComments) !== JSON.stringify(comments)) {
       setComments(updatedComments);
     }
-  }, [task]);
+  }, [task, assignees, comments, labels, priority, subtasks, taskDescription, taskName]);
 
   const handleChangeTaskName = useCallback((event) => {
     setTaskName(event.target.value);

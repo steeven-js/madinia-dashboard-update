@@ -1,14 +1,12 @@
 import { useState, useCallback } from 'react';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { ref, uploadBytes, deleteObject, getDownloadURL } from 'firebase/storage';
 
 import Box from '@mui/material/Box';
 import { styled } from '@mui/material/styles';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import { storage } from 'src/utils/firebase';
-import { Iconify } from 'src/components/iconify';
+
 import { UploadBox, MultiFilePreview } from 'src/components/upload';
 
 // ----------------------------------------------------------------------

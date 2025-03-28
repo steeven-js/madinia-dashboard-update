@@ -50,39 +50,6 @@ const ItemBase = forwardRef((props, ref) => {
     />
   );
 
-  // Fonction pour obtenir l'icône appropriée en fonction du type de fichier
-  const getFileIcon = (fileType) => {
-    if (fileType.startsWith('application/pdf')) {
-      return '/assets/icons/files/ic_pdf.svg';
-    }
-    if (fileType.includes('word') || fileType.includes('docx')) {
-      return '/assets/icons/files/ic_word.svg';
-    }
-    if (
-      fileType.includes('excel') ||
-      fileType.includes('spreadsheet') ||
-      fileType.includes('xlsx')
-    ) {
-      return '/assets/icons/files/ic_excel.svg';
-    }
-    if (
-      fileType.includes('powerpoint') ||
-      fileType.includes('presentation') ||
-      fileType.includes('pptx')
-    ) {
-      return '/assets/icons/files/ic_ppt.svg';
-    }
-    if (
-      fileType.includes('zip') ||
-      fileType.includes('compressed') ||
-      fileType.includes('archive')
-    ) {
-      return '/assets/icons/files/ic_zip.svg';
-    }
-    // Icône par défaut pour les autres types de fichiers
-    return '/assets/icons/files/ic_file.svg';
-  };
-
   const renderImage = () => {
     if (!task?.attachments?.length) return null;
 

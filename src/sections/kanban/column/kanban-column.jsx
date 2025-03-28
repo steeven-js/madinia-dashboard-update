@@ -3,8 +3,9 @@ import { CSS } from '@dnd-kit/utilities';
 import { useBoolean } from 'minimal-shared/hooks';
 import { useSortable, defaultAnimateLayoutChanges } from '@dnd-kit/sortable';
 
-import { createTask, clearColumn, deleteColumn, updateColumn } from 'src/actions/kanban';
 import { useAuth } from 'src/hooks/use-auth';
+
+import { createTask, clearColumn, deleteColumn, updateColumn } from 'src/actions/kanban';
 
 import { toast } from 'src/components/snackbar';
 

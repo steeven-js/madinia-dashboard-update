@@ -1,39 +1,28 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
+
 import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import Menu from '@mui/material/Menu';
 import Stack from '@mui/material/Stack';
 import Avatar from '@mui/material/Avatar';
+import Tooltip from '@mui/material/Tooltip';
+import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
-import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
-import Tooltip from '@mui/material/Tooltip';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 
 import { fToNow } from 'src/utils/format-time';
-import { fileFormat, fileThumb, fileData, fileNameByUrl } from 'src/sections/kanban/utils';
-import { deleteComment } from 'src/actions/kanban';
 
-// Import des constantes de format
-import {
-  FORMAT_PDF,
-  FORMAT_TEXT,
-  FORMAT_PHOTOSHOP,
-  FORMAT_WORD,
-  FORMAT_EXCEL,
-  FORMAT_ZIP,
-  FORMAT_ILLUSTRATOR,
-  FORMAT_POWERPOINT,
-  FORMAT_AUDIO,
-  FORMAT_IMG,
-  FORMAT_VIDEO,
-} from 'src/sections/kanban/utils';
+import { deleteComment } from 'src/actions/kanban';
 
 import { Image } from 'src/components/image';
 import { Iconify } from 'src/components/iconify';
 import { Lightbox, useLightBox } from 'src/components/lightbox';
+
+// Import des constantes de format
+import { fileThumb, fileNameByUrl } from 'src/sections/kanban/utils';
 
 // ----------------------------------------------------------------------
 

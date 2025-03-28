@@ -16,7 +16,7 @@ export const FileThumbnail = forwardRef((props, ref) => {
 
   const { icon, removeBtn, downloadBtn, tooltip: tooltipProps } = slotProps ?? {};
 
-  const { name, path, preview } = fileData(file);
+  const { name, path } = fileData(file);
 
   // Gérer correctement les différents types d'entrée pour prévisualisation
   let previewUrl;

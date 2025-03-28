@@ -1,21 +1,21 @@
-import { useState, useCallback, useRef } from 'react';
+import { useRef, useState, useCallback } from 'react';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
+import Tooltip from '@mui/material/Tooltip';
 import InputBase from '@mui/material/InputBase';
 import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
+import { storage } from 'src/utils/firebase';
 
 import { Iconify } from 'src/components/iconify';
-import { useAuth } from 'src/hooks/use-auth';
-import { storage } from 'src/utils/firebase';
 
 // ----------------------------------------------------------------------
 
 export function KanbanDetailsCommentInput({ taskId, columnId, onAddComment, task }) {
-  const { userProfile } = useAuth();
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('text');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,7 +58,7 @@ export function KanbanDetailsCommentInput({ taskId, columnId, onAddComment, task
     } finally {
       setIsSubmitting(false);
     }
-  }, [message, messageType, task.reporter, onAddComment]);
+  }, [message, messageType, task.reporter, task.createdBy, onAddComment]);
 
   const handleKeyDown = (event) => {
     if (event.key === 'Enter' && event.ctrlKey) {
@@ -90,7 +90,7 @@ export function KanbanDetailsCommentInput({ taskId, columnId, onAddComment, task
         message: downloadURL,
         messageType: type,
         fileName: file.name,
-        fileExtension: fileExtension,
+        fileExtension,
         fileSize: file.size,
         filePath,
         createdAt: new Date().toISOString(),
