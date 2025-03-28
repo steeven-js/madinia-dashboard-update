@@ -129,7 +129,13 @@ export function DashboardLayout({ sx, cssVars, children, slotProps, layoutQuery 
           <SettingsButton />
 
           {/** @slot Account drawer */}
-          <AccountDrawer data={_account} />
+          {currentUser && currentUserProfile && (
+            <AccountDrawer
+              data={_account}
+              currentUser={currentUser}
+              currentUserProfile={currentUserProfile}
+            />
+          )}
         </Box>
       ),
     };

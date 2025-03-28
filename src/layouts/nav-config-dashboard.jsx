@@ -49,8 +49,6 @@ export const navData = [
     subheader: 'Overview',
     items: [
       { title: 'App', path: paths.dashboard.root, icon: ICONS.dashboard },
-      { title: 'Profile', path: paths.dashboard.user.root, icon: ICONS.user },
-      { title: 'Account', path: paths.dashboard.user.account, icon: ICONS.user },
       {
         title: 'Paramètres Système',
         path: paths.dashboard.systemSettings,

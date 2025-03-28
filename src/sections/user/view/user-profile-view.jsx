@@ -15,14 +15,11 @@ import { _userAbout, _userFeeds, _userFriends, _userGallery, _userFollowers } fr
 import { Iconify } from 'src/components/iconify';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
-import { useMockedUser } from 'src/auth/hooks';
-
 // import { ProfileHome } from '../profile-home';
 import { ProfileCover } from '../profile-cover';
 // import { ProfileFriends } from '../profile-friends';
 // import { ProfileGallery } from '../profile-gallery';
 // import { ProfileFollowers } from '../profile-followers';
-import { useAuth } from 'src/hooks/use-auth';
 import { BlankView } from 'src/sections/blank/view';
 
 // ----------------------------------------------------------------------
@@ -81,16 +78,8 @@ export function UserProfileView({ currentUser, currentUserProfile }) {
   const searchParams = useSearchParams();
   const selectedTab = searchParams.get(TAB_PARAM) ?? '';
 
-  console.log('currentUser', currentUser);
-  console.log('currentUserProfile', currentUserProfile);
-
-  const { user } = useMockedUser();
-
-  const [searchFriends, setSearchFriends] = useState('');
-
-  const handleSearchFriends = useCallback((event) => {
-    setSearchFriends(event.target.value);
-  }, []);
+  // console.log('currentUser', currentUser);
+  // console.log('currentUserProfile', currentUserProfile);
 
   const createRedirectPath = (currentPath, query) => {
     const queryString = new URLSearchParams({ [TAB_PARAM]: query }).toString();
