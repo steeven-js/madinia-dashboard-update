@@ -9,6 +9,22 @@ import CardContent from '@mui/material/CardContent';
 import Tooltip from '@mui/material/Tooltip';
 
 import { fToNow } from 'src/utils/format-time';
+import { fileFormat, fileThumb, fileData, fileNameByUrl } from 'src/sections/kanban/utils';
+
+// Import des constantes de format
+import {
+  FORMAT_PDF,
+  FORMAT_TEXT,
+  FORMAT_PHOTOSHOP,
+  FORMAT_WORD,
+  FORMAT_EXCEL,
+  FORMAT_ZIP,
+  FORMAT_ILLUSTRATOR,
+  FORMAT_POWERPOINT,
+  FORMAT_AUDIO,
+  FORMAT_IMG,
+  FORMAT_VIDEO,
+} from 'src/sections/kanban/utils';
 
 import { Image } from 'src/components/image';
 import { Iconify } from 'src/components/iconify';
@@ -37,11 +53,46 @@ export function KanbanDetailsCommentList({ comments }) {
     }
   }, [comments.length]);
 
+  // Fonction pour obtenir l'icône appropriée en fonction du messageType
+  const getMessageTypeIcon = (comment) => {
+    const { messageType, fileExtension } = comment;
+
+    switch (messageType) {
+      case 'image':
+        return 'solar:gallery-add-bold';
+      case 'file':
+        if (fileExtension) {
+          // Créer une URL factice pour réutiliser les fonctions utils.js
+          const fakeUrl = `dummy.${fileExtension.toLowerCase()}`;
+
+          // Obtenir directement le chemin vers l'icône SVG
+          const iconPath = fileThumb(fakeUrl);
+
+          // Log pour déboguer
+          console.log(
+            `Comment: ${JSON.stringify({
+              messageType: comment.messageType,
+              fileExtension: comment.fileExtension,
+              fileName: comment.fileName,
+            })}`
+          );
+          console.log(`Chemin d'icône: ${iconPath}`);
+
+          return iconPath;
+        }
+        // Utiliser directement l'URL du message si pas d'extension
+        return fileThumb(comment.message);
+      default:
+        return 'eva:message-circle-fill';
+    }
+  };
+
   return (
     <>
       <Stack component="ul" spacing={3}>
         {comments.map((comment, index) => {
           const isLastComment = index === comments.length - 1;
+          const messageIcon = getMessageTypeIcon(comment);
 
           return (
             <Box
@@ -80,7 +131,7 @@ export function KanbanDetailsCommentList({ comments }) {
                       }}
                       onClick={() => lightbox.onOpen(comment.message)}
                     >
-                      <Iconify icon="solar:gallery-add-bold" width={48} height={48} />
+                      <Iconify icon={messageIcon} width={48} height={48} />
                     </Box>
                     <CardContent sx={{ p: 1.5 }}>
                       <Typography variant="body2" noWrap>
@@ -91,16 +142,32 @@ export function KanbanDetailsCommentList({ comments }) {
                 ) : comment.messageType === 'file' ? (
                   <Card sx={{ borderRadius: 1.5, overflow: 'hidden' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', p: 2 }}>
-                      <Iconify
-                        icon="eva:file-fill"
-                        width={32}
-                        height={32}
-                        sx={{ color: 'primary.main', mr: 1 }}
-                      />
-                      <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
-                        {comment.message}
+                      {comment.fileExtension ? (
+                        <Image
+                          src={messageIcon}
+                          sx={{ width: 32, height: 32, color: 'primary.main', mr: 1 }}
+                        />
+                      ) : (
+                        <Iconify
+                          icon={messageIcon}
+                          width={32}
+                          height={32}
+                          sx={{ color: 'primary.main', mr: 1 }}
+                        />
+                      )}
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ flexGrow: 1, textOverflow: 'ellipsis', overflow: 'hidden' }}
+                      >
+                        {comment.fileName || fileNameByUrl(comment.message)}
                       </Typography>
-                      <IconButton size="small">
+                      <IconButton
+                        size="small"
+                        component="a"
+                        href={comment.message}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         <Iconify icon="eva:download-fill" />
                       </IconButton>
                     </Box>
