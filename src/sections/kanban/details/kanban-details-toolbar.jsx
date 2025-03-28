@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useBoolean, usePopover } from 'minimal-shared/hooks';
+import { useGetBoard } from 'src/actions/kanban';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -24,22 +25,40 @@ export function KanbanDetailsToolbar({
   taskStatus,
   onLikeToggle,
   onCloseDetails,
+  task,
+  onUpdateTask,
   ...other
 }) {
   const theme = useTheme();
   const smUp = useMediaQuery(theme.breakpoints.up('sm'));
+  const { board } = useGetBoard();
 
   const menuActions = usePopover();
   const confirmDialog = useBoolean();
 
   const [status, setStatus] = useState(taskStatus);
 
+  const currentColumnName = board.columns.find((col) => col.id === taskStatus)?.name || 'To do';
+
   const handleChangeStatus = useCallback(
-    (newValue) => {
+    (columnId) => {
       menuActions.onClose();
-      setStatus(newValue);
+
+      setStatus(columnId);
+
+      const targetColumn = board.columns.find((col) => col.id === columnId);
+
+      if (targetColumn) {
+        onUpdateTask({ ...task, status: columnId });
+      } else {
+        const defaultColumnId = board.columns[0]?.id;
+        if (defaultColumnId) {
+          setStatus(defaultColumnId);
+          onUpdateTask({ ...task, status: defaultColumnId });
+        }
+      }
     },
-    [menuActions]
+    [menuActions, board.columns, onUpdateTask, task]
   );
 
   const renderMenuActions = () => (
@@ -50,13 +69,13 @@ export function KanbanDetailsToolbar({
       slotProps={{ arrow: { placement: 'top-right' } }}
     >
       <MenuList>
-        {['To do', 'In progress', 'Ready to test', 'Done'].map((option) => (
+        {board.columns.map((column) => (
           <MenuItem
-            key={option}
-            selected={status === option}
-            onClick={() => handleChangeStatus(option)}
+            key={column.id}
+            selected={status === column.id}
+            onClick={() => handleChangeStatus(column.id)}
           >
-            {option}
+            {column.name}
           </MenuItem>
         ))}
       </MenuList>
@@ -109,7 +128,7 @@ export function KanbanDetailsToolbar({
           endIcon={<Iconify icon="eva:arrow-ios-downward-fill" width={16} sx={{ ml: -0.5 }} />}
           onClick={menuActions.onOpen}
         >
-          {status}
+          {currentColumnName}
         </Button>
 
         <Box component="span" sx={{ flexGrow: 1 }} />

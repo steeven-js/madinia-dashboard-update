@@ -185,6 +185,8 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
       liked={likeToggle.value}
       onCloseDetails={onClose}
       onLikeToggle={likeToggle.onToggle}
+      task={task}
+      onUpdateTask={onUpdateTask}
     />
   );
 
