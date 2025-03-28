@@ -146,7 +146,7 @@ export function PermissionsTab() {
               <TableHeadCustom
                 order={table.order}
                 orderBy={table.orderBy}
-                headLabel={TABLE_HEAD}
+                headCells={TABLE_HEAD}
                 onSort={table.onSort}
               />
 
