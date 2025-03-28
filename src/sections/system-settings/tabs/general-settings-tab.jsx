@@ -1,32 +1,25 @@
 import { useState } from 'react';
-import PropTypes from 'prop-types';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
 
+import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import CardHeader from '@mui/material/CardHeader';
-import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
-import TextField from '@mui/material/TextField';
+import Stack from '@mui/material/Stack';
+import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Switch from '@mui/material/Switch';
-import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import Divider from '@mui/material/Divider';
+import Container from '@mui/material/Container';
+import TextField from '@mui/material/TextField';
+import FormGroup from '@mui/material/FormGroup';
+import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
-import Stack from '@mui/material/Stack';
-import Box from '@mui/material/Box';
-import Alert from '@mui/material/Alert';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-
-import { Iconify } from 'src/components/iconify';
-import { toast } from 'src/components/snackbar';
+import CardContent from '@mui/material/CardContent';
+import FormControlLabel from '@mui/material/FormControlLabel';
 
 import { CONFIG } from 'src/global-config';
+
+import { toast } from 'src/components/snackbar';
+import { Iconify } from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 

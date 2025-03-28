@@ -1,5 +1,7 @@
 import { useCallback } from 'react';
+
 import { toast } from 'src/components/snackbar';
+
 import { useAuth } from './use-auth';
 
 /**
@@ -56,9 +58,7 @@ export function usePermission() {
    * @returns {Promise<any>} Résultat de l'action ou null si non autorisé
    */
   const createWithPermission = useCallback(
-    (action, options = {}) => {
-      return executeWithPermission('manage_content', action, options);
-    },
+    (action, options = {}) => executeWithPermission('manage_content', action, options),
     [executeWithPermission]
   );
 
@@ -69,9 +69,7 @@ export function usePermission() {
    * @returns {Promise<any>} Résultat de l'action ou null si non autorisé
    */
   const updateWithPermission = useCallback(
-    (action, options = {}) => {
-      return executeWithPermission('manage_content', action, options);
-    },
+    (action, options = {}) => executeWithPermission('manage_content', action, options),
     [executeWithPermission]
   );
 
@@ -82,9 +80,7 @@ export function usePermission() {
    * @returns {Promise<any>} Résultat de l'action ou null si non autorisé
    */
   const deleteWithPermission = useCallback(
-    (action, options = {}) => {
-      return executeWithPermission('manage_content', action, options);
-    },
+    (action, options = {}) => executeWithPermission('manage_content', action, options),
     [executeWithPermission]
   );
 
@@ -95,9 +91,7 @@ export function usePermission() {
    * @returns {Promise<any>} Résultat de l'action ou null si non autorisé
    */
   const manageUserWithPermission = useCallback(
-    (action, options = {}) => {
-      return executeWithPermission('manage_users', action, options);
-    },
+    (action, options = {}) => executeWithPermission('manage_users', action, options),
     [executeWithPermission]
   );
 

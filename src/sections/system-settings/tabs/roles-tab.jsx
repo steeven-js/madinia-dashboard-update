@@ -1,60 +1,42 @@
-import { useState, useMemo, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
+import { useMemo, useState, useEffect } from 'react';
 
+import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
+import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
-import Container from '@mui/material/Container';
-import TableBody from '@mui/material/TableBody';
-import Typography from '@mui/material/Typography';
-import TableContainer from '@mui/material/TableContainer';
-import TablePagination from '@mui/material/TablePagination';
+import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import TextField from '@mui/material/TextField';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import Chip from '@mui/material/Chip';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import Container from '@mui/material/Container';
+import TableBody from '@mui/material/TableBody';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import InputLabel from '@mui/material/InputLabel';
+import DialogTitle from '@mui/material/DialogTitle';
+import FormControl from '@mui/material/FormControl';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 import OutlinedInput from '@mui/material/OutlinedInput';
-import Box from '@mui/material/Box';
-import Alert from '@mui/material/Alert';
-import Tab from '@mui/material/Tab';
-import Tabs from '@mui/material/Tabs';
-import Paper from '@mui/material/Paper';
-import Switch from '@mui/material/Switch';
-import Divider from '@mui/material/Divider';
-import TableRow from '@mui/material/TableRow';
-import Checkbox from '@mui/material/Checkbox';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import CardContent from '@mui/material/CardContent';
+import TableContainer from '@mui/material/TableContainer';
 
+import { useAuth } from 'src/hooks/use-auth';
+
+import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
-import { toast } from 'src/components/snackbar';
 import {
   useTable,
-  getComparator,
   emptyRows,
   TableNoData,
   TableEmptyRows,
   TableHeadCustom,
-  TableSelectedAction,
   TablePaginationCustom,
-  TableSkeleton,
 } from 'src/components/table';
 
 import { useRolePermission } from 'src/auth/context/role-permission-context';
-import { useAuth } from 'src/hooks/use-auth';
 
 import { RoleTableRow } from '../role-table-row';
 
@@ -87,9 +69,7 @@ export function RolesTab() {
   }, [roles]);
 
   // Liste des permissions disponibles pour les sélecteurs
-  const availablePermissions = useMemo(() => {
-    return permissions.map((p) => p.code);
-  }, [permissions]);
+  const availablePermissions = useMemo(() => permissions.map((p) => p.code), [permissions]);
 
   const table = useTable({
     defaultOrderBy: 'level',

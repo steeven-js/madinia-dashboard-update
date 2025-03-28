@@ -1,5 +1,5 @@
-import PropTypes from 'prop-types';
 import { useMemo } from 'react';
+import PropTypes from 'prop-types';
 
 import { useAuth } from 'src/hooks/use-auth';
 
@@ -31,9 +31,7 @@ export function PermissionControlled({
   const requiredPermissions = Array.isArray(permissions) ? permissions : [permissions];
 
   // Check if user has any of the required permissions
-  const isAuthorized = useMemo(() => {
-    return requiredPermissions.some((permission) => hasPermission(permission));
-  }, [requiredPermissions, hasPermission]);
+  const isAuthorized = useMemo(() => requiredPermissions.some((permission) => hasPermission(permission)), [requiredPermissions, hasPermission]);
 
   // If user has permission, render the content
   if (isAuthorized) {

@@ -1,8 +1,9 @@
-import { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { useMemo, useState, useContext, useCallback, createContext } from 'react';
+
+import { useAuth } from 'src/hooks/use-auth';
 
 import { CONFIG } from 'src/global-config';
-import { useAuth } from 'src/hooks/use-auth';
 
 // ----------------------------------------------------------------------
 
@@ -129,15 +130,11 @@ export function RolePermissionProvider({ children }) {
    * Obtenir tous les rôles ayant une permission spécifique
    */
   const getRolesByPermission = useCallback(
-    (permission) => {
-      return Object.entries(roles)
-        .filter(([_, roleConfig]) => {
-          return (
+    (permission) => Object.entries(roles)
+        .filter(([_, roleConfig]) => (
             roleConfig.permissions.includes(permission) || roleConfig.permissions.includes('all')
-          );
-        })
-        .map(([roleName, _]) => roleName);
-    },
+          ))
+        .map(([roleName, _]) => roleName),
     [roles]
   );
 
@@ -258,20 +255,20 @@ export function RolePermissionProvider({ children }) {
   /**
    * Créer une nouvelle permission (descriptive uniquement)
    */
-  const createPermission = useCallback(async (permissionData) => {
+  const createPermission = useCallback(async (permissionData) => 
     // Cette fonction est principalement informative car les permissions
     // sont en réalité stockées avec les rôles
-    return true;
-  }, []);
+     true
+  , []);
 
   /**
    * Mettre à jour une permission (descriptive uniquement)
    */
-  const updatePermission = useCallback(async (permissionData) => {
+  const updatePermission = useCallback(async (permissionData) => 
     // Cette fonction est principalement informative car les permissions
     // sont en réalité stockées avec les rôles
-    return true;
-  }, []);
+     true
+  , []);
 
   const contextValue = useMemo(
     () => ({

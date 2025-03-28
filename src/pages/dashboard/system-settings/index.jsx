@@ -1,8 +1,8 @@
-import { SystemSettingsView } from 'src/sections/system-settings/view';
-
 import { Helmet } from 'react-helmet-async';
 
 import { CONFIG } from 'src/global-config';
+
+import { SystemSettingsView } from 'src/sections/system-settings/view';
 
 // ----------------------------------------------------------------------
 

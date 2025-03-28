@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
+
+import { useRolePermission } from 'src/auth/context/role-permission-context';
+
 import { useAuth } from './use-auth';
 import { usePermission } from './use-permission';
-import { useRolePermission } from 'src/auth/context/role-permission-context';
 
 /**
  * Hook qui centralise toutes les fonctionnalités liées aux rôles et permissions
@@ -39,14 +41,12 @@ export function usePermissionsManager() {
    * @param {Object} options - Options supplémentaires
    * @returns {Promise<any>}
    */
-  const executeAsSuperAdmin = (action, options = {}) => {
-    return executeWithPermission('all', action, {
+  const executeAsSuperAdmin = (action, options = {}) => executeWithPermission('all', action, {
       ...options,
       onDenied: () => {
         throw new Error('Seul un super administrateur peut effectuer cette action');
       },
     });
-  };
 
   /**
    * Exécute une action uniquement si l'utilisateur est admin ou super_admin
@@ -54,31 +54,25 @@ export function usePermissionsManager() {
    * @param {Object} options - Options supplémentaires
    * @returns {Promise<any>}
    */
-  const executeAsAdmin = (action, options = {}) => {
-    return executeWithPermission('manage_users', action, {
+  const executeAsAdmin = (action, options = {}) => executeWithPermission('manage_users', action, {
       ...options,
       onDenied: () => {
         throw new Error('Seul un administrateur peut effectuer cette action');
       },
     });
-  };
 
   /**
    * Obtient le niveau d'accès de l'utilisateur actuel
    * @returns {number} Niveau d'accès
    */
-  const getCurrentAccessLevel = () => {
-    return currentUserRole && roles[currentUserRole] ? roles[currentUserRole].level : 0;
-  };
+  const getCurrentAccessLevel = () => currentUserRole && roles[currentUserRole] ? roles[currentUserRole].level : 0;
 
   /**
    * Vérifie si l'utilisateur actuel peut accéder à un niveau de permission donné
    * @param {number} requiredLevel - Niveau requis
    * @returns {boolean}
    */
-  const canAccessLevel = (requiredLevel) => {
-    return getCurrentAccessLevel() >= requiredLevel;
-  };
+  const canAccessLevel = (requiredLevel) => getCurrentAccessLevel() >= requiredLevel;
 
   /**
    * Vérifie si l'utilisateur actuel peut gérer un rôle donné

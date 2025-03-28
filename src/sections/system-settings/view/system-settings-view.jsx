@@ -7,11 +7,12 @@ import Typography from '@mui/material/Typography';
 
 import { paths } from 'src/routes/paths';
 
+import { useAuth } from 'src/hooks/use-auth';
+
 import { DashboardContent } from 'src/layouts/dashboard';
 
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
-import { useAuth } from 'src/hooks/use-auth';
 import { RoleBasedGuard } from 'src/auth/guard';
 
 import { RolesTab } from '../tabs/roles-tab';
