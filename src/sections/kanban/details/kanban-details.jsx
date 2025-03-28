@@ -23,7 +23,6 @@ import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { CustomTabs } from 'src/components/custom-tabs';
 import { useDateRangePicker, CustomDateRangePicker } from 'src/components/custom-date-range-picker';
-import { useGetBoard } from 'src/actions/kanban';
 
 import { KanbanDetailsToolbar } from './kanban-details-toolbar';
 import { KanbanInputName } from '../components/kanban-input-name';
@@ -57,9 +56,7 @@ const BlockLabel = styled('span')(({ theme }) => ({
 
 export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose }) {
   const tabs = useTabs('overview');
-  const { board } = useGetBoard();
 
-  const boardRef = useRef(board);
   const taskRef = useRef(task);
 
   const likeToggle = useBoolean();
@@ -80,53 +77,40 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
   const rangePicker = useDateRangePicker(dayjs(task.due[0]), dayjs(task.due[1]));
 
   useEffect(() => {
-    boardRef.current = board;
     taskRef.current = task;
-  }, [board, task]);
+  }, [task]);
 
   useEffect(() => {
-    if (!board.tasks) return;
-
-    const columnId = Object.keys(board.tasks).find((colId) =>
-      board.tasks[colId].some((t) => t.id === task.id)
-    );
-
-    if (!columnId) return;
-
-    const updatedTask = board.tasks[columnId].find((t) => t.id === task.id);
-
-    if (!updatedTask) return;
-
-    if (updatedTask.priority !== priority) {
-      setPriority(updatedTask.priority);
+    if (task.priority !== priority) {
+      setPriority(task.priority);
     }
 
-    if (updatedTask.name !== taskName) {
-      setTaskName(updatedTask.name);
+    if (task.name !== taskName) {
+      setTaskName(task.name);
     }
 
-    if (updatedTask.description !== taskDescription) {
-      setTaskDescription(updatedTask.description);
+    if (task.description !== taskDescription) {
+      setTaskDescription(task.description);
     }
 
-    const updatedAssignees = updatedTask.assignee || [];
+    const updatedAssignees = task.assignee || [];
     if (JSON.stringify(updatedAssignees) !== JSON.stringify(assignees)) {
       setAssignees(updatedAssignees);
     }
 
-    const updatedLabels = updatedTask.labels || [];
+    const updatedLabels = task.labels || [];
     if (JSON.stringify(updatedLabels) !== JSON.stringify(labels)) {
       setLabels(updatedLabels);
     }
 
-    const updatedSubtasks = updatedTask.subtasks || [];
+    const updatedSubtasks = task.subtasks || [];
     if (JSON.stringify(updatedSubtasks) !== JSON.stringify(subtasks)) {
       setSubtasks(updatedSubtasks);
       setSubtaskCompleted(
         updatedSubtasks.filter((subtask) => subtask.completed).map((subtask) => subtask.id)
       );
     }
-  }, [board]);
+  }, [task]);
 
   const handleChangeTaskName = useCallback((event) => {
     setTaskName(event.target.value);
@@ -267,8 +251,6 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
       liked={likeToggle.value}
       onCloseDetails={onClose}
       onLikeToggle={likeToggle.onToggle}
-      task={task}
-      onUpdateTask={onUpdateTask}
     />
   );
 
