@@ -73,6 +73,7 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
   const [labels, setLabels] = useState(task.labels || []);
   const [newSubtaskName, setNewSubtaskName] = useState('');
   const [showSubtaskInput, setShowSubtaskInput] = useState(false);
+  const [comments, setComments] = useState(task.comments || []);
 
   const rangePicker = useDateRangePicker(dayjs(task.due[0]), dayjs(task.due[1]));
 
@@ -109,6 +110,11 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
       setSubtaskCompleted(
         updatedSubtasks.filter((subtask) => subtask.completed).map((subtask) => subtask.id)
       );
+    }
+
+    const updatedComments = task.comments || [];
+    if (JSON.stringify(updatedComments) !== JSON.stringify(comments)) {
+      setComments(updatedComments);
     }
   }, [task]);
 
@@ -242,6 +248,21 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
       setShowSubtaskInput(false);
     }
   };
+
+  const handleAddComment = useCallback(
+    async (newComment) => {
+      try {
+        const updatedComments = [...comments, newComment];
+        setComments(updatedComments);
+        onUpdateTask({ ...task, comments: updatedComments });
+        return true;
+      } catch (error) {
+        console.error('Error adding comment:', error);
+        return false;
+      }
+    },
+    [comments, onUpdateTask, task]
+  );
 
   const renderToolbar = () => (
     <KanbanDetailsToolbar
@@ -460,7 +481,7 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
   );
 
   const renderTabComments = () =>
-    !!task.comments.length && <KanbanDetailsCommentList comments={task.comments} />;
+    !!comments.length && <KanbanDetailsCommentList comments={comments} />;
 
   return (
     <Drawer
@@ -479,7 +500,14 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
         {tabs.value === 'comments' && renderTabComments()}
       </Scrollbar>
 
-      {tabs.value === 'comments' && <KanbanDetailsCommentInput />}
+      {tabs.value === 'comments' && (
+        <KanbanDetailsCommentInput
+          taskId={task.id}
+          columnId={task.status}
+          onAddComment={handleAddComment}
+          task={task}
+        />
+      )}
     </Drawer>
   );
 }
