@@ -17,9 +17,6 @@ import { usePathname } from '../hooks';
 // Overview
 const IndexPage = lazy(() => import('src/pages/dashboard'));
 const OverviewAnalyticsPage = lazy(() => import('src/pages/dashboard/analytics'));
-// Order
-const OrderListPage = lazy(() => import('src/pages/dashboard/order/list'));
-const OrderDetailsPage = lazy(() => import('src/pages/dashboard/order/details'));
 // Invoice
 const InvoiceListPage = lazy(() => import('src/pages/dashboard/invoice/list'));
 const InvoiceDetailsPage = lazy(() => import('src/pages/dashboard/invoice/details'));
@@ -46,18 +43,18 @@ const BlogPostsPage = lazy(() => import('src/pages/dashboard/post/list'));
 const BlogPostPage = lazy(() => import('src/pages/dashboard/post/details'));
 const BlogNewPostPage = lazy(() => import('src/pages/dashboard/post/new'));
 const BlogEditPostPage = lazy(() => import('src/pages/dashboard/post/edit'));
+// Event
+const EventListPage = lazy(() => import('src/pages/dashboard/event/list'));
+const EventDetailsPage = lazy(() => import('src/pages/dashboard/event/details'));
+const EventCreatePage = lazy(() => import('src/pages/dashboard/event/new'));
+const EventEditPage = lazy(() => import('src/pages/dashboard/event/edit'));
 // File manager
 // const FileManagerPage = lazy(() => import('src/pages/dashboard/file-manager'));
 // App
-const ChatPage = lazy(() => import('src/pages/dashboard/chat'));
-const MailPage = lazy(() => import('src/pages/dashboard/mail'));
 const CalendarPage = lazy(() => import('src/pages/dashboard/calendar'));
 const KanbanPage = lazy(() => import('src/pages/dashboard/kanban'));
 const KanbanSettingsPage = lazy(() => import('src/pages/dashboard/kanban-settings'));
-// Test render page by role
-const PermissionDeniedPage = lazy(() => import('src/pages/dashboard/permission'));
 // Blank page
-const ParamsPage = lazy(() => import('src/pages/dashboard/params'));
 const BlankPage = lazy(() => import('src/pages/dashboard/blank'));
 // Customer
 const CustomerProfilePage = lazy(() => import('src/pages/dashboard/customer/profile'));
@@ -132,11 +129,13 @@ export const dashboardRoutes = [
         ],
       },
       {
-        path: 'order',
+        path: 'event',
         children: [
-          { index: true, element: <OrderListPage /> },
-          { path: 'list', element: <OrderListPage /> },
-          { path: ':id', element: <OrderDetailsPage /> },
+          { index: true, element: <EventListPage /> },
+          { path: 'list', element: <EventListPage /> },
+          { path: ':id', element: <EventDetailsPage /> },
+          { path: ':id/edit', element: <EventEditPage /> },
+          { path: 'new', element: <EventCreatePage /> },
         ],
       },
       {

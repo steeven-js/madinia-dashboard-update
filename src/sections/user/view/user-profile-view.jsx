@@ -1,4 +1,3 @@
-import { useState, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
@@ -10,17 +9,17 @@ import { RouterLink } from 'src/routes/components';
 import { usePathname, useSearchParams } from 'src/routes/hooks';
 
 import { DashboardContent } from 'src/layouts/dashboard';
-import { _userAbout, _userFeeds, _userFriends, _userGallery, _userFollowers } from 'src/_mock';
 
 import { Iconify } from 'src/components/iconify';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
-// import { ProfileHome } from '../profile-home';
-import { ProfileCover } from '../profile-cover';
 // import { ProfileFriends } from '../profile-friends';
 // import { ProfileGallery } from '../profile-gallery';
 // import { ProfileFollowers } from '../profile-followers';
 import { BlankView } from 'src/sections/blank/view';
+
+// import { ProfileHome } from '../profile-home';
+import { ProfileCover } from '../profile-cover';
 
 // ----------------------------------------------------------------------
 

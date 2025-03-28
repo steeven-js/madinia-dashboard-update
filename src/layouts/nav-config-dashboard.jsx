@@ -2,8 +2,6 @@ import { paths } from 'src/routes/paths';
 
 import { CONFIG } from 'src/global-config';
 
-import { Label } from 'src/components/label';
-import { Iconify } from 'src/components/iconify';
 import { SvgColor } from 'src/components/svg-color';
 
 // ----------------------------------------------------------------------
@@ -80,20 +78,9 @@ export const navData = [
         icon: ICONS.user,
         roles: ['super_admin', 'admin'],
         children: [
-          { title: 'Profile', path: paths.dashboard.customer.root },
           { title: 'Cards', path: paths.dashboard.customer.cards },
           { title: 'List', path: paths.dashboard.customer.list },
           { title: 'Create', path: paths.dashboard.customer.new },
-          { title: 'Edit', path: paths.dashboard.customer.demo.edit },
-        ],
-      },
-      {
-        title: 'Order',
-        path: paths.dashboard.order.root,
-        icon: ICONS.order,
-        children: [
-          { title: 'List', path: paths.dashboard.order.root },
-          { title: 'Details', path: paths.dashboard.order.demo.details },
         ],
       },
       {
@@ -102,9 +89,7 @@ export const navData = [
         icon: ICONS.invoice,
         children: [
           { title: 'List', path: paths.dashboard.invoice.root },
-          { title: 'Details', path: paths.dashboard.invoice.demo.details },
           { title: 'Create', path: paths.dashboard.invoice.new },
-          { title: 'Edit', path: paths.dashboard.invoice.demo.edit },
         ],
       },
       {
@@ -113,9 +98,7 @@ export const navData = [
         icon: ICONS.blog,
         children: [
           { title: 'List', path: paths.dashboard.post.root },
-          { title: 'Details', path: paths.dashboard.post.demo.details },
           { title: 'Create', path: paths.dashboard.post.new },
-          { title: 'Edit', path: paths.dashboard.post.demo.edit },
         ],
       },
       // { title: 'File manager', path: paths.dashboard.fileManager, icon: ICONS.folder },

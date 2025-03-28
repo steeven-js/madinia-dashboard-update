@@ -1,9 +1,12 @@
-import { Box, CircularProgress } from '@mui/material';
 import { Helmet } from 'react-helmet-async';
-import { EmptyContent } from 'src/components/empty-content';
+
+import { Box, CircularProgress } from '@mui/material';
+
+import { useAuth } from 'src/hooks/use-auth';
 
 import { CONFIG } from 'src/global-config';
-import { useAuth } from 'src/hooks/use-auth';
+
+import { EmptyContent } from 'src/components/empty-content';
 
 import { UserProfileView } from 'src/sections/user/view';
 

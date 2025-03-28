@@ -14,6 +14,8 @@ export * from './_files';
 
 export * from './_order';
 
+export * from './_event';
+
 export * from './_others';
 
 export * from './_invoice';
@@ -25,3 +27,4 @@ export * from './_overview';
 export * from './_calendar';
 
 export * from './_customer';
+

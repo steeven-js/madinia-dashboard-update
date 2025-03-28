@@ -6,9 +6,9 @@ import Alert from '@mui/material/Alert';
 import { useTheme } from '@mui/material/styles';
 import { iconButtonClasses } from '@mui/material/IconButton';
 
-// import { allLangs } from 'src/locales';
-import { _contacts, _notifications } from 'src/_mock';
+import { useAuth } from 'src/hooks/use-auth';
 
+// import { allLangs } from 'src/locales';
 import { Logo } from 'src/components/logo';
 import { useSettingsContext } from 'src/components/settings';
 
@@ -20,7 +20,6 @@ import { NavHorizontal } from './nav-horizontal';
 import { _account } from '../nav-config-account';
 import { MainSection } from '../core/main-section';
 import { Searchbar } from '../components/searchbar';
-import { _workspaces } from '../nav-config-workspace';
 import { MenuButton } from '../components/menu-button';
 import { HeaderSection } from '../core/header-section';
 import { LayoutSection } from '../core/layout-section';
@@ -31,7 +30,6 @@ import { SettingsButton } from '../components/settings-button';
 // import { WorkspacesPopover } from '../components/workspaces-popover';
 import { navData as dashboardNavData } from '../nav-config-dashboard';
 import { dashboardLayoutVars, dashboardNavColorVars } from './css-vars';
-import { useAuth } from 'src/hooks/use-auth';
 // import { NotificationsDrawer } from '../components/notifications-drawer';
 
 // ----------------------------------------------------------------------
