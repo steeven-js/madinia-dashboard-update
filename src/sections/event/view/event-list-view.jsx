@@ -10,9 +10,8 @@ import Button from '@mui/material/Button';
 import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
 
-import { useEvent } from 'src/hooks/use-event';
-
 import { POST_SORT_OPTIONS } from 'src/_mock';
+import { useGetEvents } from 'src/actions/event';
 import { DashboardContent } from 'src/layouts/dashboard';
 
 import { Label } from 'src/components/label';
@@ -26,7 +25,7 @@ import { EventListHorizontal } from '../event-list-horizontal';
 // ----------------------------------------------------------------------
 
 export function EventListView() {
-  const { events, loading } = useEvent();
+  const { events, eventsLoading: loading } = useGetEvents();
 
   const [sortBy, setSortBy] = useState('latest');
 
@@ -41,8 +40,10 @@ export function EventListView() {
     [setState]
   );
 
-  const publishedCount = events.filter((event) => event.publish === 'published').length;
-  const draftCount = events.filter((event) => event.publish === 'draft').length;
+  // Count events by status
+  const currentCount = events.filter((event) => event.status === 'current').length;
+  const pastCount = events.filter((event) => event.status === 'past').length;
+  const draftCount = events.filter((event) => !event.status || event.status === 'draft').length;
 
   return (
     <DashboardContent>
@@ -50,17 +51,17 @@ export function EventListView() {
         heading="List"
         links={[
           { name: 'Dashboard', href: paths.dashboard.root },
-          { name: 'Blog', href: paths.dashboard.post.root },
+          { name: 'Events', href: paths.dashboard.event.root },
           { name: 'List' },
         ]}
         action={
           <Button
             component={RouterLink}
-            href={paths.dashboard.post.new}
+            href={paths.dashboard.event.new}
             variant="contained"
             startIcon={<Iconify icon="mingcute:add-line" />}
           >
-            New post
+            New event
           </Button>
         }
         sx={{ mb: { xs: 3, md: 5 } }}
@@ -86,7 +87,7 @@ export function EventListView() {
       </Box>
 
       <Tabs value={state.publish} onChange={handleFilterPublish} sx={{ mb: { xs: 3, md: 5 } }}>
-        {['all', 'published', 'draft'].map((tab) => (
+        {['all', 'published', 'past', 'draft'].map((tab) => (
           <Tab
             key={tab}
             iconPosition="end"
@@ -95,10 +96,13 @@ export function EventListView() {
             icon={
               <Label
                 variant={((tab === 'all' || tab === state.publish) && 'filled') || 'soft'}
-                color={(tab === 'published' && 'info') || 'default'}
+                color={
+                  (tab === 'published' && 'info') || (tab === 'past' && 'warning') || 'default'
+                }
               >
                 {tab === 'all' && events.length}
-                {tab === 'published' && publishedCount}
+                {tab === 'published' && currentCount}
+                {tab === 'past' && pastCount}
                 {tab === 'draft' && draftCount}
               </Label>
             }
@@ -116,6 +120,11 @@ export function EventListView() {
 
 function applyFilter({ inputData, filters, sortBy }) {
   const { publish } = filters;
+
+  // Handle case when inputData is not an array
+  if (!inputData || !Array.isArray(inputData)) {
+    return [];
+  }
 
   const dateToTimestamp = (date) => {
     if (!date) return 0;
@@ -143,19 +152,33 @@ function applyFilter({ inputData, filters, sortBy }) {
   let filteredData = [...inputData];
 
   if (sortBy === 'latest') {
-    filteredData = orderBy(filteredData, [(event) => dateToTimestamp(event.createdAt)], ['desc']);
+    filteredData = orderBy(filteredData, [(event) => dateToTimestamp(event.date)], ['desc']);
   }
 
   if (sortBy === 'oldest') {
-    filteredData = orderBy(filteredData, [(event) => dateToTimestamp(event.createdAt)], ['asc']);
+    filteredData = orderBy(filteredData, [(event) => dateToTimestamp(event.date)], ['asc']);
   }
 
   if (sortBy === 'popular') {
-    filteredData = orderBy(filteredData, ['totalViews'], ['desc']);
+    // If there's no totalViews, order by participants.current if available
+    filteredData = orderBy(
+      filteredData,
+      [
+        (event) =>
+          event.participants && event.participants.current ? event.participants.current : 0,
+      ],
+      ['desc']
+    );
   }
 
   if (publish !== 'all') {
-    filteredData = filteredData.filter((event) => event.publish === publish);
+    if (publish === 'published') {
+      filteredData = filteredData.filter((event) => event.status === 'current');
+    } else if (publish === 'past') {
+      filteredData = filteredData.filter((event) => event.status === 'past');
+    } else if (publish === 'draft') {
+      filteredData = filteredData.filter((event) => !event.status || event.status === 'draft');
+    }
   }
 
   return filteredData;

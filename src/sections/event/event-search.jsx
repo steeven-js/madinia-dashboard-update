@@ -13,7 +13,7 @@ import Autocomplete, { autocompleteClasses } from '@mui/material/Autocomplete';
 import { useRouter } from 'src/routes/hooks';
 import { RouterLink } from 'src/routes/components';
 
-import { useSearchEvents } from 'src/hooks/use-event';
+import { useSearchEvents } from 'src/actions/event';
 
 import { Iconify } from 'src/components/iconify';
 import { SearchNotFound } from 'src/components/search-not-found';
@@ -129,7 +129,7 @@ export function EventSearch({ redirectPath, sx }) {
               <Avatar
                 key={event.id}
                 alt={event.title}
-                src={event.coverUrl}
+                src={event.image}
                 variant="rounded"
                 sx={{
                   width: 48,

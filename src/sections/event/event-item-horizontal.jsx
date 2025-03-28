@@ -5,7 +5,6 @@ import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
-import Avatar from '@mui/material/Avatar';
 import Dialog from '@mui/material/Dialog';
 import Button from '@mui/material/Button';
 import MenuList from '@mui/material/MenuList';
@@ -57,6 +56,29 @@ export function EventItemHorizontal({ sx, event, editHref, detailsHref, ...other
     }
   }, [event.id, handleCloseConfirm]);
 
+  // Get a plain text preview from HTML content if description is HTML
+  const getTextPreview = (htmlString) => {
+    if (!htmlString) return '';
+    // Simple HTML tag removal
+    return htmlString.replace(/<[^>]*>?/gm, '').substring(0, 120) + '...';
+  };
+
+  // Get event status label and color
+  const getStatusDetails = (status) => {
+    if (!status) return { label: 'draft', color: 'default' };
+
+    switch (status) {
+      case 'current':
+        return { label: 'published', color: 'info' };
+      case 'past':
+        return { label: 'archived', color: 'warning' };
+      default:
+        return { label: status, color: 'default' };
+    }
+  };
+
+  const statusDetails = getStatusDetails(event.status);
+
   const renderMenuActions = () => (
     <CustomPopover
       open={menuActions.open}
@@ -107,12 +129,12 @@ export function EventItemHorizontal({ sx, event, editHref, detailsHref, ...other
               justifyContent: 'space-between',
             }}
           >
-            <Label variant="soft" color={(event.publish === 'published' && 'info') || 'default'}>
-              {event.publish}
+            <Label variant="soft" color={statusDetails.color}>
+              {statusDetails.label}
             </Label>
 
             <Box component="span" sx={{ typography: 'caption', color: 'text.disabled' }}>
-              {fDate(event.createdAt)}
+              {event.date && fDate(new Date(event.date))}
             </Box>
           </Box>
 
@@ -140,7 +162,7 @@ export function EventItemHorizontal({ sx, event, editHref, detailsHref, ...other
                 }),
               ]}
             >
-              {event.description}
+              {getTextPreview(event.description)}
             </Typography>
           </Stack>
 
@@ -164,19 +186,26 @@ export function EventItemHorizontal({ sx, event, editHref, detailsHref, ...other
               }}
             >
               <Box sx={{ gap: 0.5, display: 'flex', alignItems: 'center' }}>
-                <Iconify icon="eva:message-circle-fill" width={16} />
-                {fShortenNumber(event.totalComments)}
+                <Iconify icon="eva:people-outline" width={16} />
+                {event.participants ? fShortenNumber(event.participants.current || 0) : 0}
               </Box>
 
               <Box sx={{ gap: 0.5, display: 'flex', alignItems: 'center' }}>
-                <Iconify icon="solar:eye-bold" width={16} />
-                {fShortenNumber(event.totalViews)}
+                <Iconify
+                  icon={event.isFree ? 'eva:gift-outline' : 'eva:credit-card-outline'}
+                  width={16}
+                />
+                {event.isFree ? 'Free' : `$${event.price || 0}`}
               </Box>
 
-              <Box sx={{ gap: 0.5, display: 'flex', alignItems: 'center' }}>
-                <Iconify icon="solar:share-bold" width={16} />
-                {fShortenNumber(event.totalShares)}
-              </Box>
+              {event.linkedin && (
+                <Box sx={{ gap: 0.5, display: 'flex', alignItems: 'center' }}>
+                  <Iconify icon="ri:linkedin-fill" width={16} />
+                  <Link href={event.linkedin} target="_blank" sx={{ color: 'inherit' }}>
+                    LinkedIn
+                  </Link>
+                </Box>
+              )}
             </Box>
           </Box>
         </Stack>
@@ -191,17 +220,7 @@ export function EventItemHorizontal({ sx, event, editHref, detailsHref, ...other
             display: { xs: 'none', sm: 'block' },
           }}
         >
-          <Avatar
-            alt={event.author.name}
-            src={event.author.avatarUrl}
-            sx={{
-              top: 16,
-              right: 16,
-              zIndex: 9,
-              position: 'absolute',
-            }}
-          />
-          <Image alt={event.title} src={event.coverUrl} sx={{ height: 1, borderRadius: 1.5 }} />
+          <Image alt={event.title} src={event.image} sx={{ height: 1, borderRadius: 1.5 }} />
         </Box>
       </Card>
 

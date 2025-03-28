@@ -20,6 +20,7 @@ const ICONS = {
   order: icon('ic-order'),
   label: icon('ic-label'),
   blank: icon('ic-blank'),
+  event: icon('ic-blog'),
   kanban: icon('ic-kanban'),
   folder: icon('ic-folder'),
   course: icon('ic-course'),
@@ -99,6 +100,15 @@ export const navData = [
         children: [
           { title: 'List', path: paths.dashboard.post.root },
           { title: 'Create', path: paths.dashboard.post.new },
+        ],
+      },
+      {
+        title: 'Event',
+        path: paths.dashboard.event.root,
+        icon: ICONS.event,
+        children: [
+          { title: 'List', path: paths.dashboard.event.root },
+          { title: 'Create', path: paths.dashboard.event.new },
         ],
       },
       // { title: 'File manager', path: paths.dashboard.fileManager, icon: ICONS.folder },

@@ -168,6 +168,12 @@ export const paths = {
         edit: `${ROOTS.DASHBOARD}/post/${MOCK_ID}/edit`,
       },
     },
+    event: {
+      root: `${ROOTS.DASHBOARD}/event`,
+      new: `${ROOTS.DASHBOARD}/event/new`,
+      details: (id) => `${ROOTS.DASHBOARD}/event/${id}`,
+      edit: (id) => `${ROOTS.DASHBOARD}/event/${id}/edit`,
+    },
     order: {
       root: `${ROOTS.DASHBOARD}/order`,
       details: (id) => `${ROOTS.DASHBOARD}/order/${id}`,
