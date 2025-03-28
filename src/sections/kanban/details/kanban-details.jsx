@@ -420,7 +420,11 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
       {/* Attachments */}
       <Box sx={{ display: 'flex' }}>
         <BlockLabel>Attachments</BlockLabel>
-        <KanbanDetailsAttachments attachments={task.attachments} />
+        <KanbanDetailsAttachments
+          attachments={task.attachments}
+          task={task}
+          onUpdateTask={onUpdateTask}
+        />
       </Box>
     </Box>
   );
