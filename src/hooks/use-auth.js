@@ -186,7 +186,14 @@ export function useAuth() {
     role,
     error,
     isAuthenticated,
-    hasPermission: (permission) => hasRolePermission(role, permission),
+    hasPermission: (permission) => {
+      // Vérifier d'abord les permissions individuelles de l'utilisateur
+      if (userProfile?.customPermissions?.includes(permission)) {
+        return true;
+      }
+      // Puis vérifier les permissions du rôle
+      return hasRolePermission(role, permission);
+    },
     hasMinimumLevel: (level) => hasRoleLevel(role, level),
     refreshUserProfile,
   };

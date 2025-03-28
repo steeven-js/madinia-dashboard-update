@@ -35,7 +35,7 @@ const RolePermissionContext = createContext({
  * Provider pour le contexte de gestion des rôles et permissions
  */
 export function RolePermissionProvider({ children }) {
-  const { userProfile, role: currentUserRole } = useAuth();
+  const { role: currentUserRole } = useAuth();
 
   // État initial basé sur CONFIG.roles
   const [roles, setRoles] = useState(CONFIG.roles);
@@ -130,10 +130,12 @@ export function RolePermissionProvider({ children }) {
    * Obtenir tous les rôles ayant une permission spécifique
    */
   const getRolesByPermission = useCallback(
-    (permission) => Object.entries(roles)
-        .filter(([_, roleConfig]) => (
+    (permission) =>
+      Object.entries(roles)
+        .filter(
+          ([_, roleConfig]) =>
             roleConfig.permissions.includes(permission) || roleConfig.permissions.includes('all')
-          ))
+        )
         .map(([roleName, _]) => roleName),
     [roles]
   );
@@ -195,7 +197,7 @@ export function RolePermissionProvider({ children }) {
         throw new Error('Seul un super administrateur peut créer des rôles');
       }
 
-      const { id, name, label, level, permissions } = roleData;
+      const { id, name, label, level, permissions: permissionList } = roleData;
 
       // Vérifier si le rôle existe déjà
       if (roles[id]) {
@@ -209,7 +211,7 @@ export function RolePermissionProvider({ children }) {
           name,
           label,
           level,
-          permissions,
+          permissions: permissionList,
         },
       }));
 
@@ -255,20 +257,24 @@ export function RolePermissionProvider({ children }) {
   /**
    * Créer une nouvelle permission (descriptive uniquement)
    */
-  const createPermission = useCallback(async (permissionData) => 
-    // Cette fonction est principalement informative car les permissions
-    // sont en réalité stockées avec les rôles
-     true
-  , []);
+  const createPermission = useCallback(
+    async (permissionData) =>
+      // Cette fonction est principalement informative car les permissions
+      // sont en réalité stockées avec les rôles
+      true,
+    []
+  );
 
   /**
    * Mettre à jour une permission (descriptive uniquement)
    */
-  const updatePermission = useCallback(async (permissionData) => 
-    // Cette fonction est principalement informative car les permissions
-    // sont en réalité stockées avec les rôles
-     true
-  , []);
+  const updatePermission = useCallback(
+    async (permissionData) =>
+      // Cette fonction est principalement informative car les permissions
+      // sont en réalité stockées avec les rôles
+      true,
+    []
+  );
 
   const contextValue = useMemo(
     () => ({

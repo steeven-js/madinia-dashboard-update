@@ -48,7 +48,7 @@ export function usePermission() {
         throw error;
       }
     },
-    [hasPermission, toast]
+    [hasPermission]
   );
 
   /**

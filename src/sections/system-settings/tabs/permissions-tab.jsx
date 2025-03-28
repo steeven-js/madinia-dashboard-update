@@ -130,8 +130,8 @@ export function PermissionsTab() {
 
       <Alert severity="info" sx={{ mb: 3 }}>
         <AlertTitle>Information</AlertTitle>
-        Les permissions définissent les capacités des utilisateurs dans l'application. Pour
-        attribuer des permissions aux rôles, utilisez l'onglet "Gestion des Rôles".
+        Les permissions définissent les capacités des utilisateurs dans l&apos;application. Pour
+        attribuer des permissions aux rôles, utilisez l&apos;onglet &quot;Gestion des Rôles&quot;.
         {!isSuperAdmin && (
           <Typography variant="body2" sx={{ mt: 1 }}>
             Seul un super administrateur peut créer ou modifier les permissions.
@@ -237,7 +237,7 @@ export function PermissionsTab() {
 
             <Alert severity="warning">
               Cette fonctionnalité est uniquement informative. Pour attribuer des permissions aux
-              rôles, utilisez l'onglet "Gestion des Rôles".
+              rôles, utilisez l&apos;onglet &quot;Gestion des Rôles&quot;.
             </Alert>
           </Stack>
         </DialogContent>

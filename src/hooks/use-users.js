@@ -1,7 +1,7 @@
 import { deleteUser, updateProfile } from 'firebase/auth';
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { ref, listAll, uploadBytes, deleteObject, getDownloadURL } from 'firebase/storage';
-import { doc, setDoc, getDocs, updateDoc, deleteDoc, onSnapshot, collection, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, collection, serverTimestamp } from 'firebase/firestore';
 
 import { CONFIG } from 'src/global-config';
 import { AUTH, FIRESTORE, FIREBASE_STORAGE } from 'src/lib/firebase';
@@ -412,16 +412,30 @@ export const updateUserRole = async (userId, newRole) => {
   const userRef = doc(FIRESTORE, 'users', userId);
 
   try {
-    const userData = {
+    // Récupérer d'abord les données de l'utilisateur pour préserver les permissions personnalisées
+    const userDoc = await getDoc(userRef);
+
+    if (!userDoc.exists()) {
+      throw new Error(`L'utilisateur avec l'ID ${userId} n'existe pas`);
+    }
+
+    // Récupérer les permissions personnalisées existantes
+    const userData = userDoc.data();
+    const customPermissions = userData.customPermissions || [];
+
+    // Préparer les données de mise à jour
+    const updateData = {
       role: newRole,
       roleLevel: CONFIG.roles[newRole].level,
       permissions: CONFIG.roles[newRole].permissions,
+      // Préserver les permissions personnalisées
+      customPermissions,
       updatedAt: serverTimestamp()
     };
 
     // console.log('Updating user role with:', { userId, newRole, userData });
 
-    await updateDoc(userRef, userData);
+    await updateDoc(userRef, updateData);
 
     // Optionally update custom claims through a Cloud Function
     // This would require setting up a Cloud Function to update Firebase Auth custom claims
@@ -456,6 +470,36 @@ export const updateUserStatus = async (userId, newStatus) => {
   } catch (error) {
     console.error('Erreur lors de la mise à jour du statut:', error);
     toast.error('Une erreur est survenue lors de la mise à jour du statut');
+    throw error;
+  }
+};
+
+/**
+ * Met à jour les permissions personnalisées d'un utilisateur
+ * @param {string} userId - ID de l'utilisateur
+ * @param {string[]} customPermissions - Liste des permissions personnalisées
+ * @returns {Promise<void>}
+ */
+export const updateUserCustomPermissions = async (userId, customPermissions) => {
+  if (!userId) {
+    throw new Error("L'ID de l'utilisateur est requis");
+  }
+
+  if (!Array.isArray(customPermissions)) {
+    throw new Error("Les permissions doivent être fournies sous forme de tableau");
+  }
+
+  const userRef = doc(FIRESTORE, 'users', userId);
+
+  try {
+    await updateDoc(userRef, {
+      customPermissions,
+      updatedAt: serverTimestamp()
+    });
+    toast.success('Permissions personnalisées mises à jour avec succès !');
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour des permissions personnalisées:', error);
+    toast.error('Une erreur est survenue lors de la mise à jour des permissions');
     throw error;
   }
 };

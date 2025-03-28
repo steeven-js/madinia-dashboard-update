@@ -151,7 +151,7 @@ export function GeneralSettingsTab() {
             <CardContent>
               <Alert severity="info" sx={{ mb: 3 }}>
                 Les journaux système vous permettent de suivre les actions importantes dans
-                l'application.
+                l&apos;application.
               </Alert>
 
               <Box sx={{ mb: 2 }}>

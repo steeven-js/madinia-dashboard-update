@@ -1,14 +1,15 @@
-// Dans user-table-row.jsx
+import { useState } from 'react';
+import { Link as ReactRouterLink } from 'react-router';
 import { useBoolean, usePopover } from 'minimal-shared/hooks';
 
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
+import Badge from '@mui/material/Badge';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import Select from '@mui/material/Select';
 import Tooltip from '@mui/material/Tooltip';
-import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
 import TableRow from '@mui/material/TableRow';
 import Checkbox from '@mui/material/Checkbox';
@@ -17,8 +18,6 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import FormControl from '@mui/material/FormControl';
 import OutlinedInput from '@mui/material/OutlinedInput';
-
-import { RouterLink } from 'src/routes/components';
 
 import { CONFIG } from 'src/global-config';
 
@@ -29,6 +28,7 @@ import { ConfirmDialog } from 'src/components/custom-dialog';
 import { CustomPopover } from 'src/components/custom-popover';
 
 import { UserQuickEditForm } from './user-quick-edit-form';
+import { UserCustomPermissionsForm } from './user-custom-permissions-form';
 
 // ----------------------------------------------------------------------
 
@@ -38,6 +38,7 @@ export function UserTableRow({
   editHref,
   onSelectRow,
   onDeleteRow,
+  onEditRow,
   updateUserRole,
   updateUserStatus,
   manageableRoles = [],
@@ -49,6 +50,7 @@ export function UserTableRow({
   const menuActions = usePopover();
   const confirmDialog = useBoolean();
   const quickEditForm = useBoolean();
+  const [permissionsForm, setPermissionsForm] = useState({ open: false });
 
   const handleRoleChange = async (event) => {
     try {
@@ -96,6 +98,22 @@ export function UserTableRow({
 
   const getRoleLabel = (role) => CONFIG.roles[role]?.label || role;
 
+  const handleOpenPermissionsForm = () => {
+    setPermissionsForm({
+      open: true,
+      currentPermissions: row.customPermissions || [],
+    });
+  };
+
+  const handleClosePermissionsForm = () => {
+    setPermissionsForm({ open: false });
+  };
+
+  const handlePermissionsSuccess = (permissions) => {
+    // Mettre à jour localement l'affichage si nécessaire
+    toast.success('Permissions mises à jour avec succès');
+  };
+
   const renderQuickEditForm = () => (
     <UserQuickEditForm
       currentUser={row}
@@ -104,33 +122,14 @@ export function UserTableRow({
     />
   );
 
-  const renderMenuActions = () => (
-    <CustomPopover
-      open={menuActions.open}
-      anchorEl={menuActions.anchorEl}
-      onClose={menuActions.onClose}
-      slotProps={{ arrow: { placement: 'right-top' } }}
-    >
-      <MenuList>
-        <li>
-          <MenuItem component={RouterLink} href={editHref} onClick={() => menuActions.onClose()}>
-            <Iconify icon="solar:pen-bold" />
-            Edit
-          </MenuItem>
-        </li>
-
-        <MenuItem
-          onClick={() => {
-            confirmDialog.onTrue();
-            menuActions.onClose();
-          }}
-          sx={{ color: 'error.main' }}
-        >
-          <Iconify icon="solar:trash-bin-trash-bold" />
-          Delete
-        </MenuItem>
-      </MenuList>
-    </CustomPopover>
+  const renderPermissionsForm = () => (
+    <UserCustomPermissionsForm
+      userId={row.id}
+      currentPermissions={row.customPermissions || []}
+      open={permissionsForm.open}
+      onClose={handleClosePermissionsForm}
+      onSuccess={handlePermissionsSuccess}
+    />
   );
 
   const renderConfirmDialog = () => (
@@ -176,8 +175,8 @@ export function UserTableRow({
 
             <Stack sx={{ typography: 'body2', flex: '1 1 auto', alignItems: 'flex-start' }}>
               <Link
-                component={RouterLink}
-                href={editHref}
+                component={ReactRouterLink}
+                to={editHref}
                 color="inherit"
                 sx={{ cursor: 'pointer' }}
               >
@@ -210,6 +209,13 @@ export function UserTableRow({
               ))}
             </Select>
           </FormControl>
+          {row.customPermissions?.length > 0 && (
+            <Tooltip title="Cet utilisateur a des permissions personnalisées">
+              <Badge badgeContent={row.customPermissions.length} color="primary" sx={{ ml: 1 }}>
+                <Iconify icon="mdi:shield-account" />
+              </Badge>
+            </Tooltip>
+          )}
         </TableCell>
 
         <TableCell>
@@ -244,30 +250,60 @@ export function UserTableRow({
           </FormControl>
         </TableCell>
 
-        <TableCell>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Tooltip title="Quick Edit" placement="top" arrow>
-              <IconButton
-                color={quickEditForm.value ? 'inherit' : 'default'}
-                onClick={quickEditForm.onTrue}
-              >
-                <Iconify icon="solar:pen-bold" />
+        <TableCell align="right" sx={{ px: 1, whiteSpace: 'nowrap' }}>
+          {canManage && (
+            <Tooltip title="Gérer les permissions personnalisées">
+              <IconButton color="info" onClick={handleOpenPermissionsForm}>
+                <Iconify icon="mdi:account-key" />
               </IconButton>
             </Tooltip>
+          )}
 
-            <IconButton
-              color={menuActions.open ? 'inherit' : 'default'}
-              onClick={menuActions.onOpen}
+          <IconButton color="default" onClick={onEditRow}>
+            <Iconify icon="solar:pen-bold" />
+          </IconButton>
+
+          <IconButton color={menuActions.open ? 'inherit' : 'default'} onClick={menuActions.onOpen}>
+            <Iconify icon="eva:more-vertical-fill" />
+          </IconButton>
+
+          {menuActions.open && (
+            <CustomPopover
+              open={menuActions.open}
+              onClose={menuActions.onClose}
+              arrow="right-top"
+              sx={{ width: 140 }}
             >
-              <Iconify icon="eva:more-vertical-fill" />
-            </IconButton>
-          </Box>
+              <MenuItem
+                onClick={() => {
+                  menuActions.onClose();
+                  quickEditForm.onTrue();
+                }}
+              >
+                <Iconify icon="solar:pen-bold" />
+                Édition rapide
+              </MenuItem>
+
+              {canManage && !isCurrentUser && (
+                <MenuItem
+                  onClick={() => {
+                    confirmDialog.onTrue();
+                    menuActions.onClose();
+                  }}
+                  sx={{ color: 'error.main' }}
+                >
+                  <Iconify icon="solar:trash-bin-trash-bold" />
+                  Supprimer
+                </MenuItem>
+              )}
+            </CustomPopover>
+          )}
         </TableCell>
       </TableRow>
 
-      {renderQuickEditForm()}
-      {renderMenuActions()}
       {renderConfirmDialog()}
+      {renderQuickEditForm()}
+      {renderPermissionsForm()}
     </>
   );
 }

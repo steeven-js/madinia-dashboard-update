@@ -1,4 +1,5 @@
 import { z as zod } from 'zod';
+import { useState, useEffect } from 'react';
 import { useBoolean } from 'minimal-shared/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
@@ -6,19 +7,29 @@ import { isValidPhoneNumber } from 'react-phone-number-input/input';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
+import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid2';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Switch from '@mui/material/Switch';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
+import InputLabel from '@mui/material/InputLabel';
 import LoadingButton from '@mui/lab/LoadingButton';
+import FormControl from '@mui/material/FormControl';
+import OutlinedInput from '@mui/material/OutlinedInput';
 import FormControlLabel from '@mui/material/FormControlLabel';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
 import { useAuth } from 'src/hooks/use-auth';
-import { deleteUserCompletely, updateOrCreateUserData } from 'src/hooks/use-users';
+import {
+  deleteUserCompletely,
+  updateOrCreateUserData,
+  updateUserCustomPermissions,
+} from 'src/hooks/use-users';
 
 import { fData } from 'src/utils/format-number';
 
@@ -26,6 +37,8 @@ import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
+
+import { useRolePermission } from 'src/auth/context/role-permission-context';
 
 // ----------------------------------------------------------------------
 
@@ -57,10 +70,14 @@ export const NewUserSchema = zod.object({
 export function UserNewEditForm({ currentUser }) {
   const router = useRouter();
   const { role: currentUserRole } = useAuth();
+  const { permissions } = useRolePermission();
   const confirmDelete = useBoolean();
   const deleteLoading = useBoolean();
+  const [customPermissions, setCustomPermissions] = useState([]);
+  const [savingPermissions, setSavingPermissions] = useState(false);
 
   const isSuperAdmin = currentUserRole === 'super_admin';
+  const isAdmin = currentUserRole === 'admin' || isSuperAdmin;
 
   const defaultValues = {
     status: '',
@@ -94,6 +111,12 @@ export function UserNewEditForm({ currentUser }) {
   } = methods;
 
   const values = watch();
+
+  useEffect(() => {
+    if (currentUser?.customPermissions) {
+      setCustomPermissions(currentUser.customPermissions);
+    }
+  }, [currentUser]);
 
   const onSubmit = handleSubmit(async (data) => {
     try {
@@ -135,6 +158,21 @@ export function UserNewEditForm({ currentUser }) {
     }
   };
 
+  const handleUpdateCustomPermissions = async () => {
+    if (!currentUser?.id) return;
+
+    setSavingPermissions(true);
+    try {
+      await updateUserCustomPermissions(currentUser.id, customPermissions);
+      toast.success('Permissions personnalisées mises à jour avec succès !');
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour des permissions :', error);
+      toast.error('Échec de la mise à jour des permissions');
+    } finally {
+      setSavingPermissions(false);
+    }
+  };
+
   const renderConfirmDeleteDialog = () => (
     <ConfirmDialog
       open={confirmDelete.value}
@@ -153,6 +191,9 @@ export function UserNewEditForm({ currentUser }) {
       }
     />
   );
+
+  // Liste des codes de permission disponibles
+  const availablePermissions = permissions?.map((p) => p.code) || [];
 
   return (
     <Form methods={methods} onSubmit={onSubmit}>
@@ -289,6 +330,52 @@ export function UserNewEditForm({ currentUser }) {
               <Field.Text name="company" label="Company" />
               <Field.Text name="role" label="Role" />
             </Box>
+
+            {currentUser && isAdmin && (
+              <Box sx={{ mt: 3, pt: 3, borderTop: '1px dashed rgba(145, 158, 171, 0.2)' }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                  Permissions personnalisées
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+                  Ces permissions s&apos;ajoutent à celles du rôle de l&apos;utilisateur
+                </Typography>
+
+                <FormControl fullWidth>
+                  <InputLabel id="custom-permissions-label">Permissions personnalisées</InputLabel>
+                  <Select
+                    labelId="custom-permissions-label"
+                    multiple
+                    value={customPermissions}
+                    onChange={(e) => setCustomPermissions(e.target.value)}
+                    input={<OutlinedInput label="Permissions personnalisées" />}
+                    renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {selected.map((value) => (
+                          <Chip key={value} label={value} />
+                        ))}
+                      </Box>
+                    )}
+                  >
+                    {availablePermissions.map((permission) => (
+                      <MenuItem key={permission} value={permission}>
+                        {permission === 'all' ? 'Toutes les permissions' : permission}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <Stack direction="row" justifyContent="flex-end" sx={{ mt: 3 }}>
+                  <LoadingButton
+                    variant="contained"
+                    color="primary"
+                    onClick={handleUpdateCustomPermissions}
+                    loading={savingPermissions}
+                  >
+                    Enregistrer les permissions
+                  </LoadingButton>
+                </Stack>
+              </Box>
+            )}
 
             <Stack sx={{ mt: 3, alignItems: 'flex-end' }}>
               <LoadingButton type="submit" variant="contained" loading={isSubmitting}>

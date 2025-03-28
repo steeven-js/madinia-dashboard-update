@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
@@ -6,8 +6,6 @@ import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 
 import { paths } from 'src/routes/paths';
-
-import { useAuth } from 'src/hooks/use-auth';
 
 import { DashboardContent } from 'src/layouts/dashboard';
 
@@ -44,14 +42,12 @@ const TABS = [
 export function SystemSettingsView() {
   const [currentTab, setCurrentTab] = useState('general');
 
-  const { userProfile, role } = useAuth();
-
-  const handleChangeTab = useCallback((event, newValue) => {
+  const handleChangeTab = (event, newValue) => {
     setCurrentTab(newValue);
-  }, []);
+  };
 
   return (
-    <DashboardContent>
+    <DashboardContent title="Paramètres du Système">
       <CustomBreadcrumbs
         heading="Paramètres Système"
         links={[{ name: 'Dashboard', href: paths.dashboard.root }, { name: 'Paramètres Système' }]}
@@ -67,7 +63,7 @@ export function SystemSettingsView() {
               Accès Restreint
             </Typography>
             <Typography variant="body2">
-              Cette section est réservée aux administrateurs système. Vous n'avez pas les
+              Cette section est réservée aux administrateurs système. Vous n&apos;avez pas les
               autorisations nécessaires pour accéder à cette page.
             </Typography>
           </Container>

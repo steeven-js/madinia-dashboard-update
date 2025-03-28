@@ -22,67 +22,68 @@ export function PermissionControlled({
 }) {
   const { hasPermission } = useAuth();
 
-  // If no permissions are required, always show the content
-  if (!permissions || permissions.length === 0) {
-    return children;
-  }
+  // Always calculate isAuthorized with useMemo
+  const isAuthorized = useMemo(() => {
+    // If no permissions required, user is authorized
+    if (!permissions || permissions.length === 0) {
+      return true;
+    }
 
-  // Transform single permission to array for consistency
-  const requiredPermissions = Array.isArray(permissions) ? permissions : [permissions];
+    // Transform single permission to array for consistency
+    const requiredPermissions = Array.isArray(permissions) ? permissions : [permissions];
+    return requiredPermissions.some((permission) => hasPermission(permission));
+  }, [permissions, hasPermission]);
 
-  // Check if user has any of the required permissions
-  const isAuthorized = useMemo(() => requiredPermissions.some((permission) => hasPermission(permission)), [requiredPermissions, hasPermission]);
+  // Always calculate disabledChildren with useMemo
+  const disabledChildren = useMemo(() => {
+    // Only calculate if we need to disable unauthorized content
+    if (!disableOnUnauthorized || isAuthorized) return null;
 
-  // If user has permission, render the content
+    const applyDisabled = (child) => {
+      // Skip null/undefined children
+      if (!child) return child;
+
+      // Text nodes, strings, etc. can't be disabled
+      if (typeof child !== 'object') return child;
+
+      // If child has props, clone it and add disabled
+      if (child.props) {
+        return {
+          ...child,
+          props: {
+            ...child.props,
+            disabled: true,
+            sx: {
+              ...(child.props.sx || {}),
+              opacity: 0.6,
+              pointerEvents: 'none',
+            },
+          },
+        };
+      }
+
+      return child;
+    };
+
+    // Apply disabled to all children (if array) or single child
+    return Array.isArray(children)
+      ? children.map((child) => applyDisabled(child))
+      : applyDisabled(children);
+  }, [children, disableOnUnauthorized, isAuthorized]);
+
+  // Render based on authorization state and options
   if (isAuthorized) {
     return children;
   }
 
-  // If user doesn't have permission and we should hide completely
   if (hideOnUnauthorized) {
     return fallback;
   }
 
-  // If user doesn't have permission and we should disable
   if (disableOnUnauthorized) {
-    // Apply a disabled state to children by cloning them with disabled prop
-    const disabledChildren = useMemo(() => {
-      const applyDisabled = (child) => {
-        // Skip null/undefined children
-        if (!child) return child;
-
-        // Text nodes, strings, etc. can't be disabled
-        if (typeof child !== 'object') return child;
-
-        // If child has props, clone it and add disabled
-        if (child.props) {
-          return {
-            ...child,
-            props: {
-              ...child.props,
-              disabled: true,
-              sx: {
-                ...(child.props.sx || {}),
-                opacity: 0.6,
-                pointerEvents: 'none',
-              },
-            },
-          };
-        }
-
-        return child;
-      };
-
-      // Apply disabled to all children (if array) or single child
-      return Array.isArray(children)
-        ? children.map((child) => applyDisabled(child))
-        : applyDisabled(children);
-    }, [children]);
-
     return disabledChildren;
   }
 
-  // Default: show fallback content if not authorized
   return fallback;
 }
 
