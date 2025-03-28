@@ -58,6 +58,7 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
   const tabs = useTabs('overview');
 
   const taskRef = useRef(task);
+  const commentsScrollRef = useRef(null);
 
   const likeToggle = useBoolean();
   const contactsDialog = useBoolean();
@@ -255,6 +256,17 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
         const updatedComments = [...comments, newComment];
         setComments(updatedComments);
         onUpdateTask({ ...task, comments: updatedComments });
+
+        // Scroll vers le bas après l'ajout d'un commentaire
+        setTimeout(() => {
+          if (commentsScrollRef.current) {
+            commentsScrollRef.current.scrollTo({
+              top: commentsScrollRef.current.scrollHeight,
+              behavior: 'smooth',
+            });
+          }
+        }, 100);
+
         return true;
       } catch (error) {
         console.error('Error adding comment:', error);
@@ -494,7 +506,11 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
       {renderToolbar()}
       {renderTabs()}
 
-      <Scrollbar fillContent sx={{ py: 3, px: 2.5 }}>
+      <Scrollbar
+        fillContent
+        sx={{ py: 3, px: 2.5 }}
+        ref={tabs.value === 'comments' ? commentsScrollRef : null}
+      >
         {tabs.value === 'overview' && renderTabOverview()}
         {tabs.value === 'subTasks' && renderTabSubtasks()}
         {tabs.value === 'comments' && renderTabComments()}

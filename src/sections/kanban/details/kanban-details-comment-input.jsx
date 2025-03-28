@@ -1,10 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import InputBase from '@mui/material/InputBase';
 import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 
 import { Iconify } from 'src/components/iconify';
 import { useAuth } from 'src/hooks/use-auth';
@@ -16,6 +17,7 @@ export function KanbanDetailsCommentInput({ taskId, columnId, onAddComment, task
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('text');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const inputRef = useRef(null);
 
   const handleChangeMessage = useCallback((event) => {
     setMessage(event.target.value);
@@ -37,9 +39,16 @@ export function KanbanDetailsCommentInput({ taskId, columnId, onAddComment, task
         userId: task.reporter.id || task.createdBy || '',
       };
 
-      await onAddComment(newComment);
-      setMessage('');
-      setMessageType('text');
+      const success = await onAddComment(newComment);
+      if (success) {
+        setMessage('');
+        setMessageType('text');
+
+        // Remettre le focus sur l'input après l'envoi
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }
     } catch (error) {
       console.error('Error adding comment:', error);
     } finally {
@@ -76,17 +85,28 @@ export function KanbanDetailsCommentInput({ taskId, columnId, onAddComment, task
           value={message}
           onChange={handleChangeMessage}
           onKeyDown={handleKeyDown}
+          inputRef={inputRef}
         />
 
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Box sx={{ flexGrow: 1, display: 'flex' }}>
-            <IconButton onClick={() => setMessageType('image')}>
-              <Iconify icon="solar:gallery-add-bold" />
-            </IconButton>
+            <Tooltip title="Ajouter une image">
+              <IconButton
+                onClick={() => setMessageType('image')}
+                color={messageType === 'image' ? 'primary' : 'default'}
+              >
+                <Iconify icon="solar:gallery-add-bold" />
+              </IconButton>
+            </Tooltip>
 
-            <IconButton onClick={() => setMessageType('file')}>
-              <Iconify icon="eva:attach-2-fill" />
-            </IconButton>
+            <Tooltip title="Ajouter un fichier">
+              <IconButton
+                onClick={() => setMessageType('file')}
+                color={messageType === 'file' ? 'primary' : 'default'}
+              >
+                <Iconify icon="eva:attach-2-fill" />
+              </IconButton>
+            </Tooltip>
           </Box>
 
           <Button
@@ -94,7 +114,7 @@ export function KanbanDetailsCommentInput({ taskId, columnId, onAddComment, task
             onClick={handleAddComment}
             disabled={!message.trim() || isSubmitting}
           >
-            Comment
+            {isSubmitting ? 'Envoi...' : 'Comment'}
           </Button>
         </Box>
       </Paper>
