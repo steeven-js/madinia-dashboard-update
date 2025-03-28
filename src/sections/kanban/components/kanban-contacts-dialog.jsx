@@ -10,8 +10,9 @@ import DialogTitle from '@mui/material/DialogTitle';
 import ListItemText from '@mui/material/ListItemText';
 import DialogContent from '@mui/material/DialogContent';
 import InputAdornment from '@mui/material/InputAdornment';
+import CircularProgress from '@mui/material/CircularProgress';
 
-import { _contacts } from 'src/_mock';
+import { useUsers } from 'src/hooks/use-users';
 
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
@@ -21,21 +22,39 @@ import { SearchNotFound } from 'src/components/search-not-found';
 
 const ITEM_HEIGHT = 64;
 
-export function KanbanContactsDialog({ assignee = [], open, onClose }) {
+export function KanbanContactsDialog({ assignee = [], open, onClose, onAssignee }) {
   const [searchContact, setSearchContact] = useState('');
+  const { users, loading } = useUsers();
 
   const handleSearchContacts = useCallback((event) => {
     setSearchContact(event.target.value);
   }, []);
 
-  const dataFiltered = applyFilter({ inputData: _contacts, query: searchContact });
+  const handleToggleAssignee = useCallback(
+    (user) => {
+      const isAssigned = assignee.map((person) => person.id).includes(user.id);
 
-  const notFound = !dataFiltered.length && !!searchContact;
+      if (isAssigned) {
+        // Désassigner l'utilisateur
+        const newAssignees = assignee.filter((person) => person.id !== user.id);
+        onAssignee?.(newAssignees);
+      } else {
+        // Assigner l'utilisateur
+        const newAssignees = [...assignee, user];
+        onAssignee?.(newAssignees);
+      }
+    },
+    [assignee, onAssignee]
+  );
+
+  const dataFiltered = applyFilter({ inputData: users, query: searchContact });
+
+  const notFound = !loading && !dataFiltered.length && !!searchContact;
 
   return (
     <Dialog fullWidth maxWidth="xs" open={open} onClose={onClose}>
       <DialogTitle sx={{ pb: 0 }}>
-        Contacts <Typography component="span">({_contacts.length})</Typography>
+        Contacts <Typography component="span">({users.length})</Typography>
       </DialogTitle>
 
       <Box sx={{ px: 3, py: 2.5 }}>
@@ -57,18 +76,22 @@ export function KanbanContactsDialog({ assignee = [], open, onClose }) {
       </Box>
 
       <DialogContent sx={{ p: 0 }}>
-        {notFound ? (
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
+            <CircularProgress />
+          </Box>
+        ) : notFound ? (
           <SearchNotFound query={searchContact} sx={{ mt: 3, mb: 10 }} />
         ) : (
           <Scrollbar sx={{ height: ITEM_HEIGHT * 6, px: 2.5 }}>
             <Box component="ul">
-              {dataFiltered.map((contact) => {
-                const checked = assignee.map((person) => person.name).includes(contact.name);
+              {dataFiltered.map((user) => {
+                const checked = assignee.map((person) => person.id).includes(user.id);
 
                 return (
                   <Box
                     component="li"
-                    key={contact.id}
+                    key={user.id}
                     sx={{
                       gap: 2,
                       display: 'flex',
@@ -76,9 +99,12 @@ export function KanbanContactsDialog({ assignee = [], open, onClose }) {
                       alignItems: 'center',
                     }}
                   >
-                    <Avatar src={contact.avatarUrl} />
+                    <Avatar src={user.avatarUrl} />
 
-                    <ListItemText primary={contact.name} secondary={contact.email} />
+                    <ListItemText
+                      primary={user.displayName || `${user.firstName} ${user.lastName}`}
+                      secondary={user.email}
+                    />
 
                     <Button
                       size="small"
@@ -90,6 +116,7 @@ export function KanbanContactsDialog({ assignee = [], open, onClose }) {
                           sx={{ mr: -0.5 }}
                         />
                       }
+                      onClick={() => handleToggleAssignee(user)}
                     >
                       {checked ? 'Assigned' : 'Assign'}
                     </Button>
@@ -109,7 +136,10 @@ export function KanbanContactsDialog({ assignee = [], open, onClose }) {
 function applyFilter({ inputData, query }) {
   if (!query) return inputData;
 
-  return inputData.filter(({ name, email }) =>
-    [name, email].some((field) => field?.toLowerCase().includes(query.toLowerCase()))
-  );
+  return inputData.filter((user) => {
+    const displayName = user.displayName || `${user.firstName} ${user.lastName}` || '';
+    const email = user.email || '';
+
+    return [displayName, email].some((field) => field.toLowerCase().includes(query.toLowerCase()));
+  });
 }

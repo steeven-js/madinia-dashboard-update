@@ -62,6 +62,7 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
   const [priority, setPriority] = useState(task.priority);
   const [taskDescription, setTaskDescription] = useState(task.description);
   const [subtaskCompleted, setSubtaskCompleted] = useState(SUBTASKS.slice(0, 2));
+  const [assignees, setAssignees] = useState(task.assignee || []);
 
   const rangePicker = useDateRangePicker(dayjs(task.due[0]), dayjs(task.due[1]));
 
@@ -91,6 +92,14 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
   const handleChangePriority = useCallback((newValue) => {
     setPriority(newValue);
   }, []);
+
+  const handleChangeAssignees = useCallback(
+    (newAssignees) => {
+      setAssignees(newAssignees);
+      onUpdateTask({ ...task, assignee: newAssignees });
+    },
+    [onUpdateTask, task]
+  );
 
   const handleClickSubtaskComplete = (taskId) => {
     const selected = subtaskCompleted.includes(taskId)
@@ -150,7 +159,7 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
         <BlockLabel sx={{ height: 40, lineHeight: '40px' }}>Assignee</BlockLabel>
 
         <Box sx={{ gap: 1, display: 'flex', flexWrap: 'wrap' }}>
-          {task.assignee.map((user) => (
+          {assignees.map((user) => (
             <Avatar key={user.id} alt={user.name} src={user.avatarUrl} />
           ))}
 
@@ -169,9 +178,10 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
           </Tooltip>
 
           <KanbanContactsDialog
-            assignee={task.assignee}
+            assignee={assignees}
             open={contactsDialog.value}
             onClose={contactsDialog.onFalse}
+            onAssignee={handleChangeAssignees}
           />
         </Box>
       </Box>
