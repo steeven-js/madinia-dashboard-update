@@ -493,7 +493,21 @@ export function KanbanDetails({ task, open, onUpdateTask, onDeleteTask, onClose 
   );
 
   const renderTabComments = () =>
-    !!comments.length && <KanbanDetailsCommentList comments={comments} />;
+    !!comments.length && (
+      <KanbanDetailsCommentList
+        comments={comments}
+        columnId={task.status}
+        taskId={task.id}
+        onCommentDeleted={(commentId) => {
+          // Mettre à jour la tâche en retirant le commentaire supprimé
+          const updatedComments = comments.filter((comment) => comment.id !== commentId);
+          onUpdateTask({
+            ...task,
+            comments: updatedComments,
+          });
+        }}
+      />
+    );
 
   return (
     <Drawer

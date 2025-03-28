@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Avatar from '@mui/material/Avatar';
@@ -7,9 +7,14 @@ import IconButton from '@mui/material/IconButton';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Tooltip from '@mui/material/Tooltip';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
 
 import { fToNow } from 'src/utils/format-time';
 import { fileFormat, fileThumb, fileData, fileNameByUrl } from 'src/sections/kanban/utils';
+import { deleteComment } from 'src/actions/kanban';
 
 // Import des constantes de format
 import {
@@ -32,8 +37,12 @@ import { Lightbox, useLightBox } from 'src/components/lightbox';
 
 // ----------------------------------------------------------------------
 
-export function KanbanDetailsCommentList({ comments }) {
+export function KanbanDetailsCommentList({ comments, columnId, taskId, onCommentDeleted }) {
   const lastCommentRef = useRef(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedComment, setSelectedComment] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deletingCommentId, setDeletingCommentId] = useState(null);
 
   // Filtrer les commentaires qui ont des images pour les diapositives
   const imageComments = comments.filter((comment) => comment.messageType === 'image');
@@ -69,14 +78,14 @@ export function KanbanDetailsCommentList({ comments }) {
           const iconPath = fileThumb(fakeUrl);
 
           // Log pour déboguer
-          console.log(
-            `Comment: ${JSON.stringify({
-              messageType: comment.messageType,
-              fileExtension: comment.fileExtension,
-              fileName: comment.fileName,
-            })}`
-          );
-          console.log(`Chemin d'icône: ${iconPath}`);
+          // console.log(
+          //   `Comment: ${JSON.stringify({
+          //     messageType: comment.messageType,
+          //     fileExtension: comment.fileExtension,
+          //     fileName: comment.fileName,
+          //   })}`
+          // );
+          // console.log(`Chemin d'icône: ${iconPath}`);
 
           return iconPath;
         }
@@ -87,20 +96,84 @@ export function KanbanDetailsCommentList({ comments }) {
     }
   };
 
+  const handleOpenMenu = (event, comment) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedComment(comment);
+  };
+
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+  };
+
+  const handleDeleteComment = async () => {
+    if (!selectedComment || !columnId || !taskId) return;
+
+    // Conserver l'ID du commentaire en cours de suppression
+    const commentIdToDelete = selectedComment.id;
+
+    // Fermer le menu immédiatement pour éviter les problèmes d'affichage
+    handleCloseMenu();
+
+    try {
+      setIsDeleting(true);
+      setDeletingCommentId(commentIdToDelete);
+
+      await deleteComment(columnId, taskId, commentIdToDelete);
+
+      // Notifier le parent si cette fonction existe
+      if (onCommentDeleted) {
+        onCommentDeleted(commentIdToDelete);
+      }
+
+      console.log('Comment deleted:', commentIdToDelete);
+    } catch (error) {
+      console.error('Failed to delete comment:', error);
+    } finally {
+      setIsDeleting(false);
+      setDeletingCommentId(null);
+    }
+  };
+
   return (
     <>
       <Stack component="ul" spacing={3}>
         {comments.map((comment, index) => {
           const isLastComment = index === comments.length - 1;
           const messageIcon = getMessageTypeIcon(comment);
+          const isBeingDeleted = deletingCommentId === comment.id;
 
           return (
             <Box
               component="li"
               key={comment.id}
-              sx={{ gap: 2, display: 'flex' }}
+              sx={{
+                gap: 2,
+                display: 'flex',
+                opacity: isBeingDeleted ? 0.5 : 1,
+                position: 'relative',
+              }}
               ref={isLastComment ? lastCommentRef : null}
             >
+              {isBeingDeleted && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1,
+                    bgcolor: 'rgba(0,0,0,0.05)',
+                    borderRadius: 1,
+                  }}
+                >
+                  <Iconify icon="eos-icons:loading" width={24} height={24} />
+                </Box>
+              )}
+
               <Tooltip title={comment.name}>
                 <Avatar src={comment.avatarUrl} sx={{ width: 40, height: 40 }}>
                   {!comment.avatarUrl && comment.name?.charAt(0).toUpperCase()}
@@ -112,9 +185,18 @@ export function KanbanDetailsCommentList({ comments }) {
                   sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
                 >
                   <Typography variant="subtitle2">{comment.name}</Typography>
-                  <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-                    {fToNow(comment.createdAt)}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Typography variant="caption" sx={{ color: 'text.disabled', mr: 1 }}>
+                      {fToNow(comment.createdAt)}
+                    </Typography>
+                    <IconButton
+                      size="small"
+                      onClick={(event) => handleOpenMenu(event, comment)}
+                      sx={{ p: 0.5 }}
+                    >
+                      <Iconify icon="eva:more-vertical-fill" width={16} height={16} />
+                    </IconButton>
+                  </Box>
                 </Box>
 
                 {comment.messageType === 'image' ? (
@@ -134,7 +216,7 @@ export function KanbanDetailsCommentList({ comments }) {
                       <Iconify icon={messageIcon} width={48} height={48} />
                     </Box>
                     <CardContent sx={{ p: 1.5 }}>
-                      <Typography variant="body2" noWrap>
+                      <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>
                         {comment.message}
                       </Typography>
                     </CardContent>
@@ -142,22 +224,24 @@ export function KanbanDetailsCommentList({ comments }) {
                 ) : comment.messageType === 'file' ? (
                   <Card sx={{ borderRadius: 1.5, overflow: 'hidden' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', p: 2 }}>
-                      {comment.fileExtension ? (
-                        <Image
-                          src={messageIcon}
-                          sx={{ width: 32, height: 32, color: 'primary.main', mr: 1 }}
-                        />
-                      ) : (
-                        <Iconify
-                          icon={messageIcon}
-                          width={32}
-                          height={32}
-                          sx={{ color: 'primary.main', mr: 1 }}
-                        />
-                      )}
+                      <Box sx={{ minWidth: 40, display: 'flex', justifyContent: 'center' }}>
+                        {comment.fileExtension ? (
+                          <Image
+                            src={messageIcon}
+                            sx={{ width: 32, height: 32, color: 'primary.main' }}
+                          />
+                        ) : (
+                          <Iconify
+                            icon={messageIcon}
+                            width={32}
+                            height={32}
+                            sx={{ color: 'primary.main' }}
+                          />
+                        )}
+                      </Box>
                       <Typography
                         variant="subtitle2"
-                        sx={{ flexGrow: 1, textOverflow: 'ellipsis', overflow: 'hidden' }}
+                        sx={{ flexGrow: 1, wordBreak: 'break-word', maxWidth: '80%', ml: 1 }}
                       >
                         {comment.fileName || fileNameByUrl(comment.message)}
                       </Typography>
@@ -179,6 +263,7 @@ export function KanbanDetailsCommentList({ comments }) {
                       p: 2,
                       borderRadius: 1,
                       bgcolor: 'background.neutral',
+                      wordBreak: 'break-word',
                     }}
                   >
                     {comment.message}
@@ -189,6 +274,28 @@ export function KanbanDetailsCommentList({ comments }) {
           );
         })}
       </Stack>
+
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleCloseMenu}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem onClick={handleDeleteComment} sx={{ color: 'error.main' }} disabled={isDeleting}>
+          <ListItemIcon sx={{ color: isDeleting ? 'text.disabled' : 'error.main' }}>
+            {isDeleting ? (
+              <Iconify icon="eos-icons:loading" />
+            ) : (
+              <Iconify icon="eva:trash-2-outline" />
+            )}
+          </ListItemIcon>
+          <ListItemText
+            primary={isDeleting ? 'Suppression en cours...' : 'Supprimer'}
+            primaryTypographyProps={{ variant: 'body2' }}
+          />
+        </MenuItem>
+      </Menu>
 
       <Lightbox
         index={lightbox.selected}
