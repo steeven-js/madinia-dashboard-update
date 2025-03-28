@@ -21,7 +21,28 @@ export function InvoiceEditView({ invoice }) {
   const handleUpdateInvoice = async (invoiceData) => {
     try {
       setSubmitting(true);
-      await updateInvoice(invoice.id, invoiceData);
+      // Ensure the customer data is correctly formatted for storage
+      const formattedInvoiceData = {
+        ...invoiceData,
+        invoiceTo: {
+          id: invoiceData.invoiceTo.id,
+          name: invoiceData.invoiceTo.name,
+          company: invoiceData.invoiceTo.company || '',
+          address: invoiceData.invoiceTo.fullAddress,
+          phoneNumber: invoiceData.invoiceTo.phoneNumber,
+        },
+        invoiceFrom: invoiceData.invoiceFrom
+          ? {
+              id: invoiceData.invoiceFrom.id,
+              name: invoiceData.invoiceFrom.name,
+              company: invoiceData.invoiceFrom.company || '',
+              address: invoiceData.invoiceFrom.fullAddress,
+              phoneNumber: invoiceData.invoiceFrom.phoneNumber,
+            }
+          : null,
+      };
+
+      await updateInvoice(invoice.id, formattedInvoiceData);
       toast.success('Facture mise à jour avec succès!');
       navigate(paths.dashboard.invoice.details(invoice.id));
     } catch (error) {

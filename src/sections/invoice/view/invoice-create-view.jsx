@@ -21,7 +21,28 @@ export function InvoiceCreateView() {
   const handleCreateInvoice = async (invoiceData) => {
     try {
       setSubmitting(true);
-      const newInvoiceId = await addInvoice(invoiceData);
+      // Ensure the customer data is correctly formatted for storage
+      const formattedInvoiceData = {
+        ...invoiceData,
+        invoiceTo: {
+          id: invoiceData.invoiceTo.id,
+          name: invoiceData.invoiceTo.name,
+          company: invoiceData.invoiceTo.company || '',
+          address: invoiceData.invoiceTo.fullAddress,
+          phoneNumber: invoiceData.invoiceTo.phoneNumber,
+        },
+        invoiceFrom: invoiceData.invoiceFrom
+          ? {
+              id: invoiceData.invoiceFrom.id,
+              name: invoiceData.invoiceFrom.name,
+              company: invoiceData.invoiceFrom.company || '',
+              address: invoiceData.invoiceFrom.fullAddress,
+              phoneNumber: invoiceData.invoiceFrom.phoneNumber,
+            }
+          : null,
+      };
+
+      const newInvoiceId = await addInvoice(formattedInvoiceData);
       toast.success('Facture créée avec succès!');
       navigate(paths.dashboard.invoice.details(newInvoiceId));
     } catch (error) {

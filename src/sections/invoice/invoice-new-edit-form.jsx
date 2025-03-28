@@ -12,7 +12,7 @@ import { useRouter } from 'src/routes/hooks';
 
 import { today, fIsAfter } from 'src/utils/format-time';
 
-import { _addressBooks } from 'src/_mock';
+import { getAllCustomers } from 'src/hooks/use-customer';
 
 import { Form, schemaHelper } from 'src/components/hook-form';
 
@@ -57,7 +57,7 @@ export const NewInvoiceSchema = zod
 
 // ----------------------------------------------------------------------
 
-export function InvoiceNewEditForm({ currentInvoice }) {
+export function InvoiceNewEditForm({ currentInvoice, onSubmit, isSubmitting }) {
   const router = useRouter();
 
   const loadingSave = useBoolean();
@@ -71,7 +71,7 @@ export function InvoiceNewEditForm({ currentInvoice }) {
     shipping: 0,
     status: 'draft',
     discount: 0,
-    invoiceFrom: _addressBooks[0],
+    invoiceFrom: null,
     invoiceTo: null,
     subtotal: 0,
     totalAmount: 0,
@@ -88,18 +88,15 @@ export function InvoiceNewEditForm({ currentInvoice }) {
   const {
     reset,
     handleSubmit,
-    formState: { isSubmitting },
+    formState: { isSubmitting: formIsSubmitting },
   } = methods;
 
   const handleSaveAsDraft = handleSubmit(async (data) => {
     loadingSave.onTrue();
-
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      reset();
+      data.status = 'draft';
+      await onSubmit(data);
       loadingSave.onFalse();
-      router.push(paths.dashboard.invoice.root);
-      console.info('DATA', JSON.stringify(data, null, 2));
     } catch (error) {
       console.error(error);
       loadingSave.onFalse();
@@ -108,13 +105,10 @@ export function InvoiceNewEditForm({ currentInvoice }) {
 
   const handleCreateAndSend = handleSubmit(async (data) => {
     loadingSend.onTrue();
-
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      reset();
+      data.status = 'pending';
+      await onSubmit(data);
       loadingSend.onFalse();
-      router.push(paths.dashboard.invoice.root);
-      console.info('DATA', JSON.stringify(data, null, 2));
     } catch (error) {
       console.error(error);
       loadingSend.onFalse();
@@ -143,7 +137,7 @@ export function InvoiceNewEditForm({ currentInvoice }) {
           color="inherit"
           size="large"
           variant="outlined"
-          loading={loadingSave.value && isSubmitting}
+          loading={loadingSave.value && (isSubmitting || formIsSubmitting)}
           onClick={handleSaveAsDraft}
         >
           Save as draft
@@ -152,7 +146,7 @@ export function InvoiceNewEditForm({ currentInvoice }) {
         <LoadingButton
           size="large"
           variant="contained"
-          loading={loadingSend.value && isSubmitting}
+          loading={loadingSend.value && (isSubmitting || formIsSubmitting)}
           onClick={handleCreateAndSend}
         >
           {currentInvoice ? 'Update' : 'Create'} & send

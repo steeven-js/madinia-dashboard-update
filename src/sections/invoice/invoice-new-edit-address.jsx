@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useBoolean } from 'minimal-shared/hooks';
 
@@ -9,8 +10,9 @@ import { useTheme } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import CircularProgress from '@mui/material/CircularProgress';
 
-import { _addressBooks } from 'src/_mock';
+import { getAllCustomers, addCustomer } from 'src/hooks/use-customer';
 
 import { Iconify } from 'src/components/iconify';
 
@@ -33,7 +35,37 @@ export function InvoiceNewEditAddress() {
   const addressTo = useBoolean();
   const addressForm = useBoolean();
 
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const { invoiceFrom, invoiceTo } = values;
+
+  // Fetch customers from Firestore
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        setLoading(true);
+        const customersData = await getAllCustomers();
+        setCustomers(customersData);
+      } catch (error) {
+        console.error('Error fetching customers:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCustomers();
+  }, []);
+
+  // Format customer data for display
+  const formattedCustomers = customers.map((customer) => ({
+    id: customer.id,
+    name: customer.name,
+    company: customer.company,
+    fullAddress: `${customer.address}, ${customer.city}, ${customer.zipCode}, ${customer.country}`,
+    phoneNumber: customer.phoneNumber,
+    primary: customer.isPrimary,
+  }));
 
   return (
     <>
@@ -90,41 +122,40 @@ export function InvoiceNewEditAddress() {
         </Stack>
       </Stack>
 
-      <AddressListDialog
-        title="Customers"
-        open={addressForm.value}
-        onClose={addressForm.onFalse}
-        selected={(selectedId) => invoiceFrom?.id === selectedId}
-        onSelect={(address) => setValue('invoiceFrom', address)}
-        list={_addressBooks}
-        action={
-          <Button
-            size="small"
-            startIcon={<Iconify icon="mingcute:add-line" />}
-            sx={{ alignSelf: 'flex-end' }}
-          >
-            New
-          </Button>
-        }
-      />
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+          <CircularProgress size={24} />
+        </Box>
+      ) : (
+        <>
+          <AddressListDialog
+            title="Your Business"
+            open={addressForm.value}
+            onClose={addressForm.onFalse}
+            selected={(selectedId) => invoiceFrom?.id === selectedId}
+            onSelect={(address) => setValue('invoiceFrom', address)}
+            list={formattedCustomers.filter((customer) => customer.primary)}
+          />
 
-      <AddressListDialog
-        title="Customers"
-        open={addressTo.value}
-        onClose={addressTo.onFalse}
-        selected={(selectedId) => invoiceTo?.id === selectedId}
-        onSelect={(address) => setValue('invoiceTo', address)}
-        list={_addressBooks}
-        action={
-          <Button
-            size="small"
-            startIcon={<Iconify icon="mingcute:add-line" />}
-            sx={{ alignSelf: 'flex-end' }}
-          >
-            New
-          </Button>
-        }
-      />
+          <AddressListDialog
+            title="Customers"
+            open={addressTo.value}
+            onClose={addressTo.onFalse}
+            selected={(selectedId) => invoiceTo?.id === selectedId}
+            onSelect={(address) => setValue('invoiceTo', address)}
+            list={formattedCustomers}
+            action={
+              <Button
+                size="small"
+                startIcon={<Iconify icon="mingcute:add-line" />}
+                sx={{ alignSelf: 'flex-end' }}
+              >
+                New
+              </Button>
+            }
+          />
+        </>
+      )}
     </>
   );
 }
