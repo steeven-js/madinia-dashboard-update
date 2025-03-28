@@ -38,7 +38,7 @@ export function PostListHomeView({ posts, loading }) {
           }),
         ]}
       >
-        <PostSearch redirectPath={(title) => paths.post.details(title)} />
+        <PostSearch redirectPath={(id) => paths.post.details(id)} />
 
         <PostSort
           sort={sortBy}
@@ -55,17 +55,42 @@ export function PostListHomeView({ posts, loading }) {
 // ----------------------------------------------------------------------
 
 function applyFilter({ inputData, sortBy }) {
+  const dateToTimestamp = (date) => {
+    if (!date) return 0;
+
+    // Handle string dates
+    if (typeof date === 'string') {
+      return new Date(date).getTime();
+    }
+
+    // Handle Firestore timestamps
+    if (date && typeof date === 'object' && date.toDate && typeof date.toDate === 'function') {
+      return date.toDate().getTime();
+    }
+
+    // Handle JavaScript Date objects
+    if (date instanceof Date && !isNaN(date)) {
+      return date.getTime();
+    }
+
+    // Fallback for other cases
+    console.warn('Unknown date format:', date);
+    return 0;
+  };
+
+  let filteredData = [...inputData];
+
   if (sortBy === 'latest') {
-    return orderBy(inputData, ['createdAt'], ['desc']);
+    filteredData = orderBy(filteredData, [(post) => dateToTimestamp(post.createdAt)], ['desc']);
   }
 
   if (sortBy === 'oldest') {
-    return orderBy(inputData, ['createdAt'], ['asc']);
+    filteredData = orderBy(filteredData, [(post) => dateToTimestamp(post.createdAt)], ['asc']);
   }
 
   if (sortBy === 'popular') {
-    return orderBy(inputData, ['totalViews'], ['desc']);
+    filteredData = orderBy(filteredData, ['totalViews'], ['desc']);
   }
 
-  return inputData;
+  return filteredData;
 }

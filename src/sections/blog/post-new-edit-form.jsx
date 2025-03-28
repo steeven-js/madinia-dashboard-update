@@ -20,6 +20,7 @@ import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
 import { _tags } from 'src/_mock';
+import { addPost, updatePost } from 'src/actions/blog';
 
 import { toast } from 'src/components/snackbar';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
@@ -34,7 +35,7 @@ export const NewPostSchema = zod.object({
   content: schemaHelper
     .editor()
     .min(100, { message: 'Content must be at least 100 characters' })
-    .max(500, { message: 'Content must be less than 500 characters' }),
+    .max(50000, { message: 'Content must be less than 50000 characters' }),
   coverUrl: schemaHelper.file({ message: 'Cover is required!' }),
   tags: zod.string().array().min(2, { message: 'Must have at least 2 items!' }),
   metaKeywords: zod.string().array().min(1, { message: 'Meta keywords is required!' }),
@@ -59,6 +60,14 @@ export function PostNewEditForm({ currentPost }) {
     metaKeywords: [],
     metaTitle: '',
     metaDescription: '',
+    publish: 'draft',
+    comments: [],
+    createdAt: new Date(),
+    totalViews: 0,
+    totalShares: 0,
+    totalComments: 0,
+    totalFavorites: 0,
+    favoritePerson: [],
   };
 
   const methods = useForm({
@@ -80,14 +89,35 @@ export function PostNewEditForm({ currentPost }) {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Add createdAt if it's a new post
+      if (!currentPost) {
+        data.createdAt = new Date().toISOString();
+      }
+
+      // Handle publish status from switch
+      const publishSwitch = document.getElementById('publish-switch');
+      data.publish = publishSwitch && publishSwitch.checked ? 'published' : 'draft';
+
+      // Handle comments from switch
+      const commentsSwitch = document.getElementById('comments-switch');
+      data.enableComments = commentsSwitch && commentsSwitch.checked;
+
+      if (currentPost?.id) {
+        // Update existing post
+        await updatePost(currentPost.id, data);
+        toast.success('Post updated successfully!');
+      } else {
+        // Create new post
+        await addPost(data);
+        toast.success('Post created successfully!');
+      }
+
       reset();
       showPreview.onFalse();
-      toast.success(currentPost ? 'Update success!' : 'Create success!');
       router.push(paths.dashboard.post.root);
-      console.info('DATA', data);
     } catch (error) {
-      console.error(error);
+      console.error('Error saving post:', error);
+      toast.error('Failed to save post. Please try again.');
     }
   });
 
@@ -192,7 +222,12 @@ export function PostNewEditForm({ currentPost }) {
 
         <FormControlLabel
           label="Enable comments"
-          control={<Switch defaultChecked inputProps={{ id: 'comments-switch' }} />}
+          control={
+            <Switch
+              defaultChecked={currentPost?.enableComments || false}
+              inputProps={{ id: 'comments-switch' }}
+            />
+          }
         />
       </Stack>
     </Card>
@@ -209,7 +244,12 @@ export function PostNewEditForm({ currentPost }) {
     >
       <FormControlLabel
         label="Publish"
-        control={<Switch defaultChecked inputProps={{ id: 'publish-switch' }} />}
+        control={
+          <Switch
+            defaultChecked={currentPost?.publish === 'published'}
+            inputProps={{ id: 'publish-switch' }}
+          />
+        }
         sx={{ pl: 3, flexGrow: 1 }}
       />
 
@@ -248,7 +288,6 @@ export function PostNewEditForm({ currentPost }) {
         onClose={showPreview.onFalse}
         coverUrl={values.coverUrl}
         isSubmitting={isSubmitting}
-        description={values.description}
       />
     </Form>
   );

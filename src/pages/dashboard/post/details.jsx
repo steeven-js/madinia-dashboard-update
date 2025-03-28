@@ -12,9 +12,9 @@ import { PostDetailsView } from 'src/sections/blog/view';
 const metadata = { title: `Post details | Dashboard - ${CONFIG.appName}` };
 
 export default function Page() {
-  const { title = '' } = useParams();
+  const { id = '' } = useParams();
 
-  const { post, postLoading, postError } = useGetPost(title);
+  const { post, postLoading, postError } = useGetPost(id);
 
   return (
     <>

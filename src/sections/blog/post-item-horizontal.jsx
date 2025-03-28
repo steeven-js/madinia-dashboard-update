@@ -1,3 +1,4 @@
+import { useState, useCallback } from 'react';
 import { usePopover } from 'minimal-shared/hooks';
 
 import Box from '@mui/material/Box';
@@ -5,18 +6,26 @@ import Link from '@mui/material/Link';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Avatar from '@mui/material/Avatar';
+import Dialog from '@mui/material/Dialog';
+import Button from '@mui/material/Button';
 import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
 
 import { RouterLink } from 'src/routes/components';
 
 import { fDate } from 'src/utils/format-time';
 import { fShortenNumber } from 'src/utils/format-number';
 
+import { deletePost } from 'src/actions/blog';
+
 import { Label } from 'src/components/label';
 import { Image } from 'src/components/image';
+import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { CustomPopover } from 'src/components/custom-popover';
 
@@ -24,6 +33,29 @@ import { CustomPopover } from 'src/components/custom-popover';
 
 export function PostItemHorizontal({ sx, post, editHref, detailsHref, ...other }) {
   const menuActions = usePopover();
+  const [openConfirm, setOpenConfirm] = useState(false);
+
+  const handleDeleteClick = () => {
+    setOpenConfirm(true);
+    menuActions.onClose();
+  };
+
+  const handleCloseConfirm = useCallback(() => {
+    setOpenConfirm(false);
+  }, []);
+
+  const handleDeletePost = useCallback(async () => {
+    try {
+      await deletePost(post.id);
+      toast.success('Post deleted successfully');
+      // Removal from UI is handled by the subscribeToPostsChanges real-time updates
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      toast.error('Failed to delete post');
+    } finally {
+      handleCloseConfirm();
+    }
+  }, [post.id, handleCloseConfirm]);
 
   const renderMenuActions = () => (
     <CustomPopover
@@ -47,7 +79,7 @@ export function PostItemHorizontal({ sx, post, editHref, detailsHref, ...other }
           </MenuItem>
         </li>
 
-        <MenuItem onClick={() => menuActions.onClose()} sx={{ color: 'error.main' }}>
+        <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>
           <Iconify icon="solar:trash-bin-trash-bold" />
           Delete
         </MenuItem>
@@ -174,6 +206,21 @@ export function PostItemHorizontal({ sx, post, editHref, detailsHref, ...other }
       </Card>
 
       {renderMenuActions()}
+
+      <Dialog open={openConfirm} onClose={handleCloseConfirm}>
+        <DialogTitle>Delete Post</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">Are you sure you want to delete this post?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button color="inherit" variant="outlined" onClick={handleCloseConfirm}>
+            Cancel
+          </Button>
+          <Button onClick={handleDeletePost} variant="contained" color="error">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }

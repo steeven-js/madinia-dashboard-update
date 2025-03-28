@@ -25,19 +25,29 @@ export function PostSearch({ redirectPath, sx }) {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState(null);
+  const [open, setOpen] = useState(false);
 
-  const debouncedQuery = useDebounce(searchQuery);
+  const debouncedQuery = useDebounce(searchQuery, 500); // 500ms debounce
   const { searchResults: options, searchLoading: loading } = useSearchPosts(debouncedQuery);
 
   const handleChange = useCallback(
     (item) => {
       setSelectedItem(item);
       if (item) {
-        router.push(redirectPath(item.title));
+        router.push(redirectPath(item.id));
       }
     },
     [redirectPath, router]
   );
+
+  const handleInputChange = useCallback((event, newValue) => {
+    setSearchQuery(newValue);
+    if (newValue && newValue.length > 0) {
+      setOpen(true);
+    } else {
+      setOpen(false);
+    }
+  }, []);
 
   const paperStyles = {
     width: 320,
@@ -61,18 +71,31 @@ export function PostSearch({ redirectPath, sx }) {
       popupIcon={null}
       loading={loading}
       options={options}
+      open={open && debouncedQuery.length >= 2}
+      onOpen={() => {
+        if (debouncedQuery.length >= 2) setOpen(true);
+      }}
+      onClose={() => setOpen(false)}
       value={selectedItem}
       onChange={(event, newValue) => handleChange(newValue)}
-      onInputChange={(event, newValue) => setSearchQuery(newValue)}
-      getOptionLabel={(option) => option.title}
-      noOptionsText={<SearchNotFound query={debouncedQuery} />}
-      isOptionEqualToValue={(option, value) => option.id === value.id}
+      onInputChange={handleInputChange}
+      getOptionLabel={(option) => option.title || ''}
+      noOptionsText={
+        debouncedQuery.length < 2 ? (
+          <Typography variant="body2" sx={{ p: 1 }}>
+            Please enter at least 2 characters to search
+          </Typography>
+        ) : (
+          <SearchNotFound query={debouncedQuery} />
+        )
+      }
+      isOptionEqualToValue={(option, value) => option.id === value?.id}
       slotProps={{ paper: { sx: paperStyles } }}
       sx={[{ width: { xs: 1, sm: 260 } }, ...(Array.isArray(sx) ? sx : [sx])]}
       renderInput={(params) => (
         <TextField
           {...params}
-          placeholder="Search..."
+          placeholder="Search posts..."
           slotProps={{
             input: {
               ...params.InputProps,
@@ -99,7 +122,7 @@ export function PostSearch({ redirectPath, sx }) {
           <li {...props} key={post.id}>
             <Link
               component={RouterLink}
-              href={redirectPath(post.title)}
+              href={redirectPath(post.id)}
               color="inherit"
               underline="none"
             >

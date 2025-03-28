@@ -80,8 +80,8 @@ export function PostDetailsView({ post, loading, error }) {
       <Container maxWidth={false} sx={{ px: { sm: 5 } }}>
         <PostDetailsToolbar
           backHref={paths.dashboard.post.root}
-          editHref={paths.dashboard.post.edit(`${post?.title}`)}
-          liveHref={paths.post.details(`${post?.title}`)}
+          editHref={paths.dashboard.post.edit(post?.id)}
+          liveHref={paths.post.details(post?.id)}
           publish={`${publish}`}
           onChangePublish={handleChangePublish}
           publishOptions={POST_PUBLISH_OPTIONS}
@@ -114,14 +114,14 @@ export function PostDetailsView({ post, loading, error }) {
           ]}
         >
           <Box sx={{ gap: 1, display: 'flex', flexWrap: 'wrap' }}>
-            {post?.tags.map((tag) => (
+            {post?.tags?.map((tag) => (
               <Chip key={tag} label={tag} variant="soft" />
             ))}
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <FormControlLabel
-              label={fShortenNumber(post?.totalFavorites)}
+              label={fShortenNumber(post?.totalFavorites || 0)}
               control={
                 <Checkbox
                   defaultChecked
@@ -139,7 +139,7 @@ export function PostDetailsView({ post, loading, error }) {
             />
 
             <AvatarGroup sx={{ [`& .${avatarGroupClasses.avatar}`]: { width: 32, height: 32 } }}>
-              {post?.favoritePerson.map((person) => (
+              {post?.favoritePerson?.map((person) => (
                 <Avatar key={person.name} alt={person.name} src={person.avatarUrl} />
               ))}
             </AvatarGroup>
@@ -150,7 +150,7 @@ export function PostDetailsView({ post, loading, error }) {
           <Typography variant="h4">Comments</Typography>
 
           <Typography variant="subtitle2" sx={{ color: 'text.disabled' }}>
-            ({post?.comments.length})
+            ({post?.comments?.length || 0})
           </Typography>
         </Box>
 

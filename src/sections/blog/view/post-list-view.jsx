@@ -40,6 +40,9 @@ export function PostListView() {
     [setState]
   );
 
+  const publishedCount = posts.filter((post) => post.publish === 'published').length;
+  const draftCount = posts.filter((post) => post.publish === 'draft').length;
+
   return (
     <DashboardContent>
       <CustomBreadcrumbs
@@ -72,7 +75,7 @@ export function PostListView() {
           alignItems: { xs: 'flex-end', sm: 'center' },
         }}
       >
-        <PostSearch redirectPath={(title) => paths.dashboard.post.details(title)} />
+        <PostSearch redirectPath={(id) => paths.dashboard.post.details(id)} />
 
         <PostSort
           sort={sortBy}
@@ -94,8 +97,8 @@ export function PostListView() {
                 color={(tab === 'published' && 'info') || 'default'}
               >
                 {tab === 'all' && posts.length}
-                {tab === 'published' && posts.filter((post) => post.publish === 'published').length}
-                {tab === 'draft' && posts.filter((post) => post.publish === 'draft').length}
+                {tab === 'published' && publishedCount}
+                {tab === 'draft' && draftCount}
               </Label>
             }
             sx={{ textTransform: 'capitalize' }}
@@ -113,21 +116,46 @@ export function PostListView() {
 function applyFilter({ inputData, filters, sortBy }) {
   const { publish } = filters;
 
+  const dateToTimestamp = (date) => {
+    if (!date) return 0;
+
+    // Handle string dates
+    if (typeof date === 'string') {
+      return new Date(date).getTime();
+    }
+
+    // Handle Firestore timestamps
+    if (date && typeof date === 'object' && date.toDate && typeof date.toDate === 'function') {
+      return date.toDate().getTime();
+    }
+
+    // Handle JavaScript Date objects
+    if (date instanceof Date && !isNaN(date)) {
+      return date.getTime();
+    }
+
+    // Fallback for other cases
+    console.warn('Unknown date format:', date);
+    return 0;
+  };
+
+  let filteredData = [...inputData];
+
   if (sortBy === 'latest') {
-    inputData = orderBy(inputData, ['createdAt'], ['desc']);
+    filteredData = orderBy(filteredData, [(post) => dateToTimestamp(post.createdAt)], ['desc']);
   }
 
   if (sortBy === 'oldest') {
-    inputData = orderBy(inputData, ['createdAt'], ['asc']);
+    filteredData = orderBy(filteredData, [(post) => dateToTimestamp(post.createdAt)], ['asc']);
   }
 
   if (sortBy === 'popular') {
-    inputData = orderBy(inputData, ['totalViews'], ['desc']);
+    filteredData = orderBy(filteredData, ['totalViews'], ['desc']);
   }
 
   if (publish !== 'all') {
-    inputData = inputData.filter((post) => post.publish === publish);
+    filteredData = filteredData.filter((post) => post.publish === publish);
   }
 
-  return inputData;
+  return filteredData;
 }

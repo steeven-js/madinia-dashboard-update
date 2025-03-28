@@ -1,32 +1,44 @@
-import useSWR from 'swr';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
-import { fetcher, endpoints } from 'src/lib/axios';
-
-// ----------------------------------------------------------------------
-
-const swrOptions = {
-  revalidateIfStale: false,
-  revalidateOnFocus: false,
-  revalidateOnReconnect: false,
-};
+import {
+  usePost,
+  addPost,
+  updatePost,
+  deletePost,
+  getAllPosts,
+  usePostByTitle,
+  searchPostByTitle,
+  subscribeToPostsChanges
+} from 'src/hooks/use-post';
 
 // ----------------------------------------------------------------------
 
 export function useGetPosts() {
-  const url = endpoints.post.list;
+  const [posts, setPosts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { data, isLoading, error, isValidating } = useSWR(url, fetcher, swrOptions);
+  useEffect(() => {
+    setIsLoading(true);
+
+    // Use the real-time subscription instead of a one-time fetch
+    const unsubscribe = subscribeToPostsChanges((postsData) => {
+      setPosts(postsData);
+      setIsLoading(false);
+    });
+
+    // Clean up the subscription when the component unmounts
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const memoizedValue = useMemo(
     () => ({
-      posts: data?.posts || [],
+      posts: posts || [],
       postsLoading: isLoading,
-      postsError: error,
-      postsValidating: isValidating,
-      postsEmpty: !isLoading && !data?.posts.length,
+      postsEmpty: !isLoading && !posts.length,
     }),
-    [data?.posts, error, isLoading, isValidating]
+    [posts, isLoading]
   );
 
   return memoizedValue;
@@ -34,19 +46,16 @@ export function useGetPosts() {
 
 // ----------------------------------------------------------------------
 
-export function useGetPost(title) {
-  const url = title ? [endpoints.post.details, { params: { title } }] : '';
-
-  const { data, isLoading, error, isValidating } = useSWR(url, fetcher, swrOptions);
+export function useGetPost(id) {
+  const { post, loading, error } = usePost(id);
 
   const memoizedValue = useMemo(
     () => ({
-      post: data?.post,
-      postLoading: isLoading,
+      post,
+      postLoading: loading,
       postError: error,
-      postValidating: isValidating,
     }),
-    [data?.post, error, isLoading, isValidating]
+    [post, error, loading]
   );
 
   return memoizedValue;
@@ -54,20 +63,57 @@ export function useGetPost(title) {
 
 // ----------------------------------------------------------------------
 
-export function useGetLatestPosts(title) {
-  const url = title ? [endpoints.post.latest, { params: { title } }] : '';
-
-  const { data, isLoading, error, isValidating } = useSWR(url, fetcher, swrOptions);
+export function useGetPostByTitle(title) {
+  const { post, loading, error } = usePostByTitle(title);
 
   const memoizedValue = useMemo(
     () => ({
-      latestPosts: data?.latestPosts || [],
+      post,
+      postLoading: loading,
+      postError: error,
+    }),
+    [post, error, loading]
+  );
+
+  return memoizedValue;
+}
+
+// ----------------------------------------------------------------------
+
+export function useGetLatestPosts(limit = 5) {
+  const [latestPosts, setLatestPosts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchLatestPosts = async () => {
+      try {
+        setIsLoading(true);
+        const allPosts = await getAllPosts();
+        // Sort by createdAt in descending order and take only the specified limit
+        const latest = allPosts
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+          .slice(0, limit);
+        setLatestPosts(latest);
+      } catch (err) {
+        console.error('Error fetching latest posts:', err);
+        setError(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLatestPosts();
+  }, [limit]);
+
+  const memoizedValue = useMemo(
+    () => ({
+      latestPosts: latestPosts || [],
       latestPostsLoading: isLoading,
       latestPostsError: error,
-      latestPostsValidating: isValidating,
-      latestPostsEmpty: !isLoading && !data?.latestPosts.length,
+      latestPostsEmpty: !isLoading && !latestPosts.length,
     }),
-    [data?.latestPosts, error, isLoading, isValidating]
+    [latestPosts, error, isLoading]
   );
 
   return memoizedValue;
@@ -76,23 +122,53 @@ export function useGetLatestPosts(title) {
 // ----------------------------------------------------------------------
 
 export function useSearchPosts(query) {
-  const url = query ? [endpoints.post.search, { params: { query } }] : '';
+  const [searchResults, setSearchResults] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const { data, isLoading, error, isValidating } = useSWR(url, fetcher, {
-    ...swrOptions,
-    keepPreviousData: true,
-  });
+  useEffect(() => {
+    const searchPosts = async () => {
+      if (!query || query.trim() === '') {
+        setSearchResults([]);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const results = await searchPostByTitle(query);
+        // Limit the number of results to improve performance
+        setSearchResults(results.slice(0, 10));
+      } catch (err) {
+        console.error('Error searching posts:', err);
+        setError(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Only search when query has at least 2 characters
+    if (query && query.trim().length >= 2) {
+      searchPosts();
+    } else {
+      setSearchResults([]);
+    }
+  }, [query]);
 
   const memoizedValue = useMemo(
     () => ({
-      searchResults: data?.results || [],
+      searchResults: searchResults || [],
       searchLoading: isLoading,
       searchError: error,
-      searchValidating: isValidating,
-      searchEmpty: !isLoading && !isValidating && !data?.results.length,
+      searchEmpty: !isLoading && query && query.trim().length >= 2 && !searchResults.length,
     }),
-    [data?.results, error, isLoading, isValidating]
+    [searchResults, error, isLoading, query]
   );
 
   return memoizedValue;
 }
+
+// ----------------------------------------------------------------------
+
+// Utility functions for direct use (not hooks)
+export { addPost, updatePost, deletePost };
