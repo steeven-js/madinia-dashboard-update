@@ -16,6 +16,8 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
+import { addCustomer, updateCustomer, deleteCustomer } from 'src/hooks/use-customer';
+
 import { fData } from 'src/utils/format-number';
 
 import { Label } from 'src/components/label';
@@ -87,15 +89,46 @@ export function CustomerNewEditForm({ currentUser }) {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Traitement de l'avatar si c'est un File
+      let processedData = { ...data };
+
+      if (data.avatarUrl instanceof File) {
+        // Pour simplifier, on ne gère pas ici l'upload de fichier
+        // qui nécessiterait d'utiliser Firebase Storage
+        // Dans un cas réel, vous devriez implémenter cette partie
+        console.warn("Upload d'avatar non implémenté dans cet exemple");
+        processedData.avatarUrl = null;
+      }
+
+      if (currentUser) {
+        // Mise à jour d'un client existant
+        await updateCustomer(currentUser.id, processedData);
+      } else {
+        // Création d'un nouveau client
+        await addCustomer(processedData);
+      }
+
       reset();
       toast.success(currentUser ? 'Mise à jour réussie!' : 'Création réussie!');
       router.push(paths.dashboard.customer.list);
-      console.info('DATA', data);
     } catch (error) {
       console.error(error);
+      toast.error(currentUser ? 'Erreur lors de la mise à jour' : 'Erreur lors de la création');
     }
   });
+
+  const handleDelete = async () => {
+    try {
+      if (!currentUser?.id) return;
+
+      await deleteCustomer(currentUser.id);
+      toast.success('Client supprimé avec succès');
+      router.push(paths.dashboard.customer.list);
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      toast.error('Erreur lors de la suppression');
+    }
+  };
 
   return (
     <Form methods={methods} onSubmit={onSubmit}>
@@ -192,7 +225,7 @@ export function CustomerNewEditForm({ currentUser }) {
 
             {currentUser && (
               <Stack sx={{ mt: 3, alignItems: 'center', justifyContent: 'center' }}>
-                <Button variant="soft" color="error">
+                <Button variant="soft" color="error" onClick={handleDelete}>
                   Supprimer le client
                 </Button>
               </Stack>
