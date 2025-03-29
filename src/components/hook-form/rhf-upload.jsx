@@ -4,6 +4,7 @@ import Box from '@mui/material/Box';
 
 import { HelperText } from './help-text';
 import { Upload, UploadBox, UploadAvatar } from '../upload';
+import { getProxiedImageUrl } from '../../../scripts/image-proxy';
 
 // ----------------------------------------------------------------------
 
@@ -72,7 +73,23 @@ export function RHFUpload({ name, multiple, helperText, ...other }) {
           setValue(name, value, { shouldValidate: true });
         };
 
-        return <Upload {...uploadProps} value={field.value} onDrop={onDrop} {...other} />;
+        // Process the value to handle Firebase Storage URLs
+        let processedValue = field.value;
+        if (
+          field.value &&
+          typeof field.value === 'string' &&
+          field.value.includes('firebasestorage.googleapis.com')
+        ) {
+          // For preview purposes in the UI, we use the original URL (the Upload component handles display)
+          // The actual loading will be handled by the browser which will use our proxy
+          processedValue = {
+            preview: field.value,
+            url: getProxiedImageUrl(field.value),
+            type: 'image/*',
+          };
+        }
+
+        return <Upload {...uploadProps} value={processedValue} onDrop={onDrop} {...other} />;
       }}
     />
   );

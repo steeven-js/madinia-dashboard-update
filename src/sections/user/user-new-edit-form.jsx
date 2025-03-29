@@ -1,6 +1,6 @@
 import { z as zod } from 'zod';
-import { useState, useEffect } from 'react';
 import { useBoolean } from 'minimal-shared/hooks';
+import { useMemo, useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
 import { isValidPhoneNumber } from 'react-phone-number-input/input';
@@ -26,12 +26,15 @@ import { useRouter } from 'src/routes/hooks';
 
 import { useAuth } from 'src/hooks/use-auth';
 import {
+  updateUserRole,
   deleteUserCompletely,
   updateOrCreateUserData,
   updateUserCustomPermissions,
 } from 'src/hooks/use-users';
 
 import { fData } from 'src/utils/format-number';
+
+import { CONFIG } from 'src/global-config';
 
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
@@ -43,26 +46,28 @@ import { useRolePermission } from 'src/auth/context/role-permission-context';
 // ----------------------------------------------------------------------
 
 export const NewUserSchema = zod.object({
-  avatarUrl: schemaHelper.file({ message: 'Avatar is required!' }),
-  name: zod.string().min(1, { message: 'Name is required!' }),
-  email: zod
-    .string()
-    .min(1, { message: 'Email is required!' })
-    .email({ message: 'Email must be a valid email address!' }),
-  phoneNumber: schemaHelper.phoneNumber({ isValid: isValidPhoneNumber }),
-  country: schemaHelper.nullableInput(zod.string().min(1, { message: 'Country is required!' }), {
-    // message for null value
-    message: 'Country is required!',
-  }),
-  address: zod.string().min(1, { message: 'Address is required!' }),
-  company: zod.string().min(1, { message: 'Company is required!' }),
-  state: zod.string().min(1, { message: 'State is required!' }),
-  city: zod.string().min(1, { message: 'City is required!' }),
-  role: zod.string().min(1, { message: 'Role is required!' }),
-  zipCode: zod.string().min(1, { message: 'Zip code is required!' }),
-  // Not required
-  status: zod.string(),
-  isVerified: zod.boolean(),
+  avatarUrl: zod.union([
+    schemaHelper.file({ message: { required_error: 'Invalid file format' } }).optional(),
+    zod.string().url().optional(),
+    zod.literal(null).optional(),
+    zod.undefined(),
+  ]),
+  displayName: zod.string().optional(),
+  email: zod.string().email({ message: 'Email must be a valid email address!' }).optional(),
+  phoneNumber: schemaHelper.phoneNumber({ isValid: isValidPhoneNumber }).optional().nullable(),
+  country: zod.any().optional().nullable(),
+  address: zod.string().optional().nullable(),
+  company: zod.string().optional().nullable(),
+  state: zod.string().optional().nullable(),
+  city: zod.string().optional().nullable(),
+  role: zod.string().optional().nullable(),
+  zipCode: zod.string().optional().nullable(),
+  about: zod.string().optional().nullable(),
+  isPublic: zod.boolean().optional().nullable(),
+  // Not required fields (unchanged)
+  status: zod.string().optional().default('active'),
+  isVerified: zod.boolean().optional().default(false),
+  isBanned: zod.boolean().optional().default(false),
 });
 
 // ----------------------------------------------------------------------
@@ -79,21 +84,25 @@ export function UserNewEditForm({ currentUser }) {
   const isSuperAdmin = currentUserRole === 'super_admin';
   const isAdmin = currentUserRole === 'admin' || isSuperAdmin;
 
-  const defaultValues = {
-    status: '',
-    avatarUrl: null,
-    isVerified: true,
-    name: '',
-    email: '',
-    phoneNumber: '',
-    country: '',
-    state: '',
-    city: '',
-    address: '',
-    zipCode: '',
-    company: '',
-    role: '',
-  };
+  const defaultValues = useMemo(
+    () => ({
+      status: currentUser?.status ?? '',
+      avatarUrl: currentUser?.avatarUrl || null,
+      isVerified: currentUser?.isVerified ?? false,
+      isBanned: currentUser?.isBanned ?? false,
+      displayName: currentUser?.displayName ?? '',
+      email: currentUser?.email ?? '',
+      phoneNumber: currentUser?.phoneNumber ?? '',
+      country: currentUser?.country ?? null,
+      state: currentUser?.state ?? '',
+      city: currentUser?.city ?? '',
+      address: currentUser?.address ?? '',
+      zipCode: currentUser?.zipCode ?? '',
+      company: currentUser?.company ?? '',
+      role: currentUser?.role ?? '',
+    }),
+    [currentUser]
+  );
 
   const methods = useForm({
     mode: 'onSubmit',
@@ -120,12 +129,22 @@ export function UserNewEditForm({ currentUser }) {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
+      console.log('Form data to submit:', data);
+
       if (currentUser) {
-        // Update user
+        // Check if role has changed
+        const roleChanged = currentUser.role !== data.role && data.role;
+
+        // Update user profile data
         await updateOrCreateUserData({
           currentUser,
           data,
         });
+
+        // If role has changed, update role separately to handle claims
+        if (roleChanged && isAdmin) {
+          await updateUserRole(currentUser.id, data.role);
+        }
       } else {
         // Create user - Implement this with your API
         await new Promise((resolve) => setTimeout(resolve, 500));
@@ -136,7 +155,7 @@ export function UserNewEditForm({ currentUser }) {
       router.push(paths.dashboard.user.list);
       console.info('DATA', data);
     } catch (error) {
-      console.error(error);
+      console.error('Error during form submission:', error);
       toast.error('Failed to save user data');
     }
   });
@@ -308,7 +327,7 @@ export function UserNewEditForm({ currentUser }) {
                 gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)' },
               }}
             >
-              <Field.Text name="name" label="Full name" />
+              <Field.Text name="displayName" label="Full name" />
               <Field.Text name="email" label="Email address" />
               <Field.Phone
                 name="phoneNumber"
@@ -328,7 +347,28 @@ export function UserNewEditForm({ currentUser }) {
               <Field.Text name="address" label="Address" />
               <Field.Text name="zipCode" label="Zip/code" />
               <Field.Text name="company" label="Company" />
-              <Field.Text name="role" label="Role" />
+
+              <FormControl fullWidth>
+                <InputLabel id="role-select-label">Role</InputLabel>
+                <Controller
+                  name="role"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      labelId="role-select-label"
+                      label="Role"
+                      disabled={!isSuperAdmin}
+                    >
+                      {Object.entries(CONFIG.roles).map(([roleKey, roleData]) => (
+                        <MenuItem key={roleKey} value={roleKey}>
+                          {roleKey === 'super_admin' ? 'Super Administrateur' : roleData.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  )}
+                />
+              </FormControl>
             </Box>
 
             {currentUser && isAdmin && (

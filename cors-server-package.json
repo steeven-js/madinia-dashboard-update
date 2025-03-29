@@ -1,0 +1,14 @@
+{
+  "name": "firebase-cors-proxy",
+  "version": "1.0.0",
+  "description": "CORS proxy for Firebase Storage",
+  "main": "cors-server.js",
+  "scripts": {
+    "start": "node cors-server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "firebase-admin": "^11.11.0"
+  }
+}

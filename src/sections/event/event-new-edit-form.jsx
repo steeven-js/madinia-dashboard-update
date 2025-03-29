@@ -214,7 +214,15 @@ export function EventNewEditForm({ currentEvent }) {
       const fileName = `events/${currentEvent?.id || Date.now()}/${Date.now()}_${file.name}`;
       const storageRef = ref(FIREBASE_STORAGE, fileName);
 
-      await uploadBytes(storageRef, file);
+      // Set metadata to avoid CORS issues
+      const metadata = {
+        contentType: file.type,
+        customMetadata: {
+          'Access-Control-Allow-Origin': '*',
+        },
+      };
+
+      await uploadBytes(storageRef, file, metadata);
       const url = await getDownloadURL(storageRef);
 
       setValue('image', url);

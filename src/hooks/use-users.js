@@ -1,10 +1,11 @@
+import { httpsCallable } from 'firebase/functions';
 import { deleteUser, updateProfile } from 'firebase/auth';
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { ref, listAll, uploadBytes, deleteObject, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, collection, serverTimestamp } from 'firebase/firestore';
 
 import { CONFIG } from 'src/global-config';
-import { AUTH, FIRESTORE, FIREBASE_STORAGE } from 'src/lib/firebase';
+import { AUTH, FIRESTORE, FIREBASE_STORAGE, FIREBASE_FUNCTIONS } from 'src/lib/firebase';
 
 import { toast } from 'src/components/snackbar';
 
@@ -310,10 +311,14 @@ export async function updateOrCreateUserData({ currentUser, data }) {
       state: data.state,
       city: data.city,
       zipCode: data.zipCode,
+      company: data.company,
       about: data.about,
       isPublic: data.isPublic,
       updatedAt: serverTimestamp(),
     };
+
+    // Ne pas mettre à jour le rôle ici, cela est géré par updateUserRole
+    // qui s'occupe aussi des custom claims
 
     // Ajouter firstName et lastName seulement s'ils sont définis
     if (data.firstName !== undefined) {
@@ -333,11 +338,16 @@ export async function updateOrCreateUserData({ currentUser, data }) {
       userData.coverUrl = coverUrl;
     }
 
+    // Filtrer les propriétés undefined qui ne sont pas supportées par Firestore
+    const filteredUserData = Object.fromEntries(
+      Object.entries(userData).filter(([_, value]) => value !== undefined)
+    );
+
     // console.log('Données à sauvegarder:', userData);
 
     // Mise à jour du document dans Firestore
     const userRef = doc(FIRESTORE, 'users', currentUser.id);
-    await setDoc(userRef, userData, { merge: true });
+    await setDoc(userRef, filteredUserData, { merge: true });
 
     // Mise à jour du profil Auth
     await updateProfile(AUTH.currentUser, {
@@ -437,8 +447,23 @@ export const updateUserRole = async (userId, newRole) => {
 
     await updateDoc(userRef, updateData);
 
-    // Optionally update custom claims through a Cloud Function
-    // This would require setting up a Cloud Function to update Firebase Auth custom claims
+    // Mettre à jour les custom claims via une Cloud Function
+    try {
+      // Appel de la Cloud Function pour mettre à jour les custom claims
+      const updateUserClaims = httpsCallable(FIREBASE_FUNCTIONS, 'updateUserClaimsFunc');
+
+      const result = await updateUserClaims({
+        userId,
+        role: newRole,
+        displayName: userData.displayName,
+      });
+
+      console.log('Résultat de la mise à jour des claims:', result.data);
+    } catch (claimsError) {
+      // Enregistrer l'erreur mais ne pas bloquer la mise à jour de Firestore
+      console.warn('Erreur lors de la mise à jour des custom claims:', claimsError);
+      toast.warning('Le rôle a été mis à jour dans la base de données, mais pas dans les claims d\'authentification');
+    }
 
     toast.success('Rôle mis à jour avec succès !');
   } catch (error) {

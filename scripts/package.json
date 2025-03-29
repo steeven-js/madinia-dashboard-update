@@ -1,0 +1,15 @@
+{
+  "name": "madinia-scripts",
+  "version": "1.0.0",
+  "description": "Utility scripts for Madinia dashboard",
+  "type": "module",
+  "scripts": {
+    "proxy": "node cors-server.js"
+  },
+  "dependencies": {
+    "@faker-js/faker": "^8.0.2",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "firebase-admin": "^11.10.1"
+  }
+}

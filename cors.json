@@ -1,0 +1,26 @@
+[
+  {
+    "origin": [
+      "http://localhost:3030",
+      "https://madinia-admin.web.app",
+      "https://madinia-admin.firebaseapp.com",
+      "https://madinia-dashboard.firebaseapp.com",
+      "http://localhost:3000"
+    ],
+    "method": [
+      "GET",
+      "PUT",
+      "POST",
+      "DELETE",
+      "HEAD"
+    ],
+    "maxAgeSeconds": 3600,
+    "responseHeader": [
+      "Content-Type",
+      "Content-Length",
+      "Content-Encoding",
+      "Accept",
+      "Authorization"
+    ]
+  }
+]

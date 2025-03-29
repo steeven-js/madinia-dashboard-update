@@ -6,26 +6,24 @@ import { getFunctions } from 'firebase/functions';
 
 import { CONFIG } from 'src/global-config';
 
-// ----------------------------------------------------------------------
+// Configuration Firebase depuis l'environnement ou le fichier de configuration
+const firebaseConfig = {
+    apiKey: CONFIG.firebase.apiKey,
+    authDomain: CONFIG.firebase.authDomain,
+    projectId: CONFIG.firebase.projectId,
+    storageBucket: CONFIG.firebase.storageBucket,
+    messagingSenderId: CONFIG.firebase.messagingSenderId,
+    appId: CONFIG.firebase.appId,
+    measurementId: CONFIG.firebase.measurementId,
+};
 
-const isFirebase = CONFIG.auth.method === 'firebase';
+// Initialiser Firebase
+const FIREBASE_APP = initializeApp(firebaseConfig);
 
-// ----------------------------------------------------------------------
+// Exportation des instances Firebase
+export const AUTH = getAuth(FIREBASE_APP);
+export const FIRESTORE = getFirestore(FIREBASE_APP);
+export const FIREBASE_STORAGE = getStorage(FIREBASE_APP);
+export const FIREBASE_FUNCTIONS = getFunctions(FIREBASE_APP);
 
-export const firebaseApp = isFirebase ? initializeApp(CONFIG.firebase) : {};
-
-// ----------------------------------------------------------------------
-
-export const AUTH = isFirebase ? getAuth(firebaseApp) : {};
-
-// ----------------------------------------------------------------------
-
-export const FIRESTORE = isFirebase ? getFirestore(firebaseApp) : {};
-
-// ----------------------------------------------------------------------
-
-export const FIREBASE_STORAGE = isFirebase ? getStorage(firebaseApp) : {};
-
-// ----------------------------------------------------------------------
-
-export const FIREBASE_FUNCTIONS = isFirebase ? getFunctions(firebaseApp) : {};
+export default FIREBASE_APP;
